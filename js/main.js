@@ -14,7 +14,6 @@ var Engine = Matter.Engine,
 // create an engine
 var engine = Engine.create();
 
-
 // The configuration variable below dictates the sensor configuration of the
 // robot's as well as other aspects of the system.  Its value comes from the
 // part of the URL that follows '#'.  If there is no '#' then we use the
@@ -100,7 +99,7 @@ if (configuration == "#TUTORIAL") {
     document.getElementById('nGreenPucksText').style.display = "none";
     document.getElementById('gridDiv').style.display = "none";
 } else if (configuration == "#PHEROMONE") {
-    myGlobals.width = 600;
+    myGlobals.width = 500;
     myGlobals.height = 800;
     myGlobals.showPheromoneGrid = true;
     document.getElementById('gridSelect').value = "pheromone";
