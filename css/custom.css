@@ -1,0 +1,60 @@
+/* The other .css files are generic and came from webstorm.  This is the custom style sheet for this page. */
+
+/*
+* {
+    border: 1px solid red !important;
+}
+*/
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.grid {
+    margin: 0 auto;
+    max-width: 2000px;
+    width: 100%;
+}
+
+.row {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+}
+
+.blockly-col {
+    width: 100%;
+}
+
+.gap-col {
+    width: 2.5%;
+}
+
+.matter-col {
+    width: 45%;
+}
+
+.blocklyDiv {
+    width: 95%;
+    height: 95%;
+    /*
+    width: 800px;
+    height: 500px;
+    */
+}
+
+.file-box {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 6px;
+}
+
+#statusMessage {
+    color: "red";
+    display: block;
+    border: 1;
+    background: "green";
+}
