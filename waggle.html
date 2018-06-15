@@ -47,8 +47,8 @@
         <!-- <script src="blockly_xml/toolbox.xml" type="text/xml"></script> -->
 <xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">
   <category name="Sensors" colour="#a55b5b">
+    <block type="robot_left_nest_value"></block>
     <block type="robot_left_obstacle"></block>
-    <block type="robot_right_obstacle"></block>
     <block type="robot_within_goal_zone"></block>
     <block type="robot_inner_puck_count">
       <field name="puckColour">red</field>
@@ -56,8 +56,14 @@
     <block type="robot_puck_held">
       <field name="puckColour">red</field>
     </block>
+    <block type="robot_left_puck_count">
+      <field name="puckColour">red</field>
+    </block>
+    <block type="robot_right_puck_count">
+      <field name="puckColour">red</field>
+    </block>
     <block type="robot_flash_count"></block>
-    <block type="robot_left_nest_value"></block>
+    <block type="robot_right_obstacle"></block>
     <block type="robot_centre_nest_value"></block>
     <block type="robot_right_nest_value"></block>
     <block type="robot_left_pheromone_value"></block>
@@ -65,24 +71,24 @@
     <block type="robot_right_pheromone_value"></block>
   </category>
   <category name="Actions" colour="#5ba55b">
+    <block type="robot_activate_flash"></block>
     <block type="robot_set_speed">
       <field name="linearSpeed">0</field>
       <field name="angularSpeed">0</field>
     </block>
-<!--    <block type="robot_set_speed_slots"></block>
--->    <block type="robot_hold_speed">
+    <block type="robot_hold_speed">
       <field name="holdTime">0</field>
     </block>
-<!--    <block type="robot_hold_speed_slot"></block>
--->    <block type="robot_activate_gripper"></block>
+    <block type="robot_hold_speed_slot"></block>
+    <block type="robot_activate_gripper"></block>
     <block type="robot_deactivate_gripper"></block>
-    <block type="robot_activate_flash"></block>
+    <block type="robot_set_speed_slots"></block>
     <block type="robot_deactivate_flash"></block>
     <block type="robot_emit_pheromone">
       <field name="quantity">10</field>
     </block>
-<!--    <block type="robot_emit_pheromone_slot"></block>
--->    <block type="robot_set_text">
+    <block type="robot_emit_pheromone_slot"></block>
+    <block type="robot_set_text">
       <field name="text">Hi!</field>
     </block>
     <block type="robot_set_text_variable">
@@ -95,17 +101,17 @@
       <field name="variableName">variableA</field>
       <field name="newValue">0</field>
     </block>
-<!--    <block type="robot_set_variable_slot">
+    <block type="robot_set_variable_slot">
       <field name="variableName">variableA</field>
     </block>
--->    <block type="robot_change_variable">
+    <block type="robot_change_variable">
       <field name="variableName">variableA</field>
       <field name="deltaValue">0</field>
     </block>
-<!--    <block type="robot_change_variable_slot">
+    <block type="robot_change_variable_slot">
       <field name="variableName">variableA</field>
     </block>
--->    <block type="robot_get_variable">
+    <block type="robot_get_variable">
       <field name="variableName">variableA</field>
     </block>
     <block type="robot_set_text_variable">

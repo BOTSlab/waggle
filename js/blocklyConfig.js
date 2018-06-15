@@ -23,7 +23,7 @@ Blockly.Blocks['robot_right_obstacle'] = {
  this.setHelpUrl("");
   }
 };
-/*
+
 Blockly.Blocks['robot_left_puck_count'] = {
   init: function() {
     this.appendDummyInput()
@@ -49,7 +49,7 @@ Blockly.Blocks['robot_right_puck_count'] = {
  this.setHelpUrl("");
   }
 };
-*/
+
 Blockly.Blocks['robot_inner_puck_count'] = {
   init: function() {
     this.appendDummyInput()
