@@ -133,9 +133,9 @@ class AdvancedClusterController {
 
         let lowDensityThreshold = 2;
 
-        var innerPucks = sensorReadings.innerPuck.count;
-        var leftPucks = sensorReadings.leftPuck.count;
-        var rightPucks = sensorReadings.rightPuck.count;
+        var innerPucks = sensorReadings.innerRedPuck.count;
+        var leftPucks = sensorReadings.leftRedPuck.count;
+        var rightPucks = sensorReadings.rightRedPuck.count;
         if (!puckHeld) {
             if (innerPucks == 1 && leftPucks <= 1 && rightPucks <=1 ) {
                 this.action.gripperOn = true;
@@ -183,5 +183,78 @@ class AdvancedClusterController {
             this.action = getForwardAction();
             this.state = "NORMAL";
         }
+    }
+}
+
+class OrbitController {
+    constructor() {
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        var avoidance = true;
+        this.action = getObstacleAvoidanceAction(sensorReadings);
+        if (!this.action) {
+            this.action = getForwardAction();
+            avoidance = false;
+        }
+
+        var leftNest = sensorReadings.leftProbe.nestValue;
+        var centreNest = sensorReadings.centreProbe.nestValue;
+        var rightNest = sensorReadings.rightProbe.nestValue;
+
+        if (rightNest >= centreNest && centreNest >= leftNest) {
+            if (centreNest >= 0.7) {
+                this.action.angularSpeed = - 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+            } else {
+                this.action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+            }
+        } else if (centreNest >= rightNest && centreNest >= leftNest) {
+            this.action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+        } else {
+            this.action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+        }
+
+        return this.action;
+    }
+}
+
+class ConstructionController {
+    constructor() {
+        this.threshold = 0.6
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        var avoidance = true;
+        this.action = getObstacleAvoidanceAction(sensorReadings);
+        if (!this.action) {
+            this.action = getForwardAction();
+            avoidance = false;
+        }
+
+        var leftNest = sensorReadings.leftProbe.nestValue;
+        var centreNest = sensorReadings.centreProbe.nestValue;
+        var rightNest = sensorReadings.rightProbe.nestValue;
+
+        if (rightNest >= centreNest && centreNest >= leftNest) {
+            if (centreNest >= this.threshold) {
+                this.action.angularSpeed = - 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+            } else {
+                this.action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+            }
+
+        } else if (centreNest >= rightNest && centreNest >= leftNest) {
+            this.action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+        } else {
+            this.action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+        }
+
+        var leftPucks = sensorReadings.leftRedPuck.count;
+        if (leftPucks > 0 && this.threshold > 0.1) {
+            this.threshold -= 0.001
+        }
+
+        this.action.textMessage = this.threshold;
+
+        return this.action;
     }
 }

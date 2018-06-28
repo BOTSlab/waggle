@@ -315,7 +315,9 @@ function manageRobotPopulation() {
         //robot.controller = new TestController();
         //robot.controller = new SimpleAvoidController();
         //robot.controller = new AdvancedClusterController();
-        robot.controller = new BlocklyController();
+        robot.controller = new BlocklyController();        
+        //robot.controller = new OrbitController();
+        //robot.controller = new ConstructionController();
         simState.robots.push(robot);
     }
     if (simState.robots.length > myGlobals.nRobots) {
