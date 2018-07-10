@@ -314,7 +314,7 @@ function reset(seedValue) {
         //myGlobals.screenshotCaptureSteps = [10, 100, 1000, 2000, 3000, 4000, 5000, 10000, 15000, 20000];
         */
         myGlobals.screenshotCaptureSteps = [];
-        myGlobals.maxStep = 20000000;
+        myGlobals.maxStep = 2000;
     }
 
     simState.robots = [];
@@ -407,9 +407,9 @@ function manageRobotPopulation() {
         //robot.controller = new TestController();
         //robot.controller = new SimpleAvoidController();
         //robot.controller = new AdvancedClusterController();
-        //robot.controller = new BlocklyController();        
+        robot.controller = new BlocklyController();        
         //robot.controller = new OrbitController();
-        robot.controller = new OrbitalConstructionController();
+        //robot.controller = new OrbitalConstructionController();
         simState.robots.push(robot);
     }
     if (simState.robots.length > myGlobals.nRobots) {

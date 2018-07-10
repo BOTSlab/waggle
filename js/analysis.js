@@ -43,7 +43,6 @@ class Analyzer {
                             redraw: false
                         });
         } else if (config == "#CONSTRUCT") {
-            // PLACEHOLDER
             this.chart = Highcharts.chart('chartDiv', {
                             chart: { animation: false },
                             title: { text: 'Avg. Puck-Tau Abs. Diff.' },
@@ -89,29 +88,37 @@ class Analyzer {
         }
 
         let timeSecs = timestamp/1000;
-        //console.log(this.seriesIndex);
-        if (forceRedraw || timeSecs - this.lastRedrawTimeSecs >= 1) {
-            // Add point and redraw
-            this.chart.series[this.seriesIndex].addPoint([timeSecs, value], true);
-            this.lastRedrawTimeSecs = timeSecs;
-        } else {
-            // Add point, but defer the redraw.
-            this.chart.series[this.seriesIndex].addPoint([timeSecs, value], false);
-        }
+        let drawNow = forceRedraw || timeSecs - this.lastRedrawTimeSecs >= 1;
 
-        // Compute the average value (over this and past series)
-        if (!this.averageMap.get(timeSecs)) {
-            this.averageMap.set(timeSecs, [value]);
+        // Compute the average value (over this and past series).  We will
+        // use the time as the key into 'averageMap' but it may differ slightly
+        // on subsequent runs.  So we truncate it to three digits here.
+        let timeKey = timeSecs.toFixed(3);
+        if (!this.averageMap.get(timeKey)) {
+            this.averageMap.set(timeKey, [value]);
 
         } else {
-            let array = this.averageMap.get(timeSecs);
+            let array = this.averageMap.get(timeKey);
             array.push(value);
             let sum = array.reduce((a, b) => a + b, 0);
             let average = sum / array.length;
             
             if (this.seriesIndex > 0) {
-                this.chart.series[this.seriesIndex+1].addPoint([timeSecs, average], true);
+                this.chart.series[this.seriesIndex+1].addPoint([timeSecs,
+                                                               average],
+                                                               drawNow);
             }
+        }
+
+        if (drawNow) {
+            // Add point and redraw
+            this.chart.series[this.seriesIndex].addPoint([timeSecs, value],
+                                                         true);
+            this.lastRedrawTimeSecs = timeSecs;
+        } else {
+            // Add point, but defer the redraw.
+            this.chart.series[this.seriesIndex].addPoint([timeSecs, value],
+                                                         false);
         }
 
     }
@@ -131,8 +138,14 @@ class Analyzer {
 
         this.chart.addSeries({
             name: "Average",
-            data: []
+            data: [],
+            lineWidth: 10,
+            marker: {
+                enabled: false
+            }
         });
+
+        this.lastRedrawTimeSecs = 0;
     }
 
     // Return the percentage completion as defined in "Cache consensus:

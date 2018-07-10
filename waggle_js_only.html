@@ -2,6 +2,7 @@
 <html>
     <head>
         <!-- Global site tag (gtag.js) - Google Analytics -->
+        <!--
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111922440-2"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
@@ -10,18 +11,21 @@
 
           gtag('config', 'UA-111922440-2');
         </script>
+      -->
 
-        <title>Waggle 1.0</title>
+        <title>Waggle (JS Only)</title>
 
         <!--        <link rel="stylesheet" href="css/normalize.css"> -->
         <!--        <link rel="stylesheet" href="css/main.css"> -->
         <link rel="stylesheet" href="css/custom.css">
 
         <!-- For Blockly -->
+        <!--
         <script src="js/vendor/blockly_compressed.js"></script>
         <script src="js/vendor/blocks_compressed.js"></script>
         <script src="js/vendor/en.js"></script>
         <script src="js/vendor/javascript_compressed.js"></script>
+      -->
 
         <!-- For JS Interpretr -->
         <!-- <script src="js/vendor/acorn_interpreter.js"></script> -->
@@ -45,6 +49,7 @@
              seems to be surprisingly complex. -->
         <!-- <embed src="blockly_xml/toolbox.xml" type="xml"> -->
         <!-- <script src="blockly_xml/toolbox.xml" type="text/xml"></script> -->
+        <!--
 <xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">
   <category name="Sensors" colour="#a55b5b">
     <block type="robot_left_nest_value"></block>
@@ -79,21 +84,15 @@
     <block type="robot_hold_speed">
       <field name="holdTime">0</field>
     </block>
-<!--
     <block type="robot_hold_speed_slot"></block>
--->
     <block type="robot_activate_gripper"></block>
     <block type="robot_deactivate_gripper"></block>
-<!--
     <block type="robot_set_speed_slots"></block>
--->
     <block type="robot_deactivate_flash"></block>
     <block type="robot_emit_pheromone">
       <field name="quantity">10</field>
     </block>
-<!--
     <block type="robot_emit_pheromone_slot"></block>
--->
     <block type="robot_set_text">
       <field name="text">Hi!</field>
     </block>
@@ -107,20 +106,16 @@
       <field name="variableName">variableA</field>
       <field name="newValue">0</field>
     </block>
-<!--
     <block type="robot_set_variable_slot">
       <field name="variableName">variableA</field>
     </block>
--->
     <block type="robot_change_variable">
       <field name="variableName">variableA</field>
       <field name="deltaValue">0</field>
     </block>
-<!--
     <block type="robot_change_variable_slot">
       <field name="variableName">variableA</field>
     </block>
--->
     <block type="robot_get_variable">
       <field name="variableName">variableA</field>
     </block>
@@ -232,7 +227,7 @@
     <block type="math_random_float"></block>
   </category>
 </xml>
-
+-->
 
 
         <!-- Required by matter -->
@@ -257,7 +252,7 @@
     </head>
 
     <body>
-        <h2>Waggle 1.0: Visual Programming for Swarm Robotics</h2>
+        <h2>Waggle (JS Only): Online Platform for Swarm Robotics</h2>
 
         <div class="grid">
             <div class="row">
@@ -288,7 +283,7 @@
                                 <td id='timeScaleText'>1</td></tr> 
 
                             <tr><td>Desired Population </td>
-                                <td><input id='nRobotsSlider' type='range' min='0' value='1' max='100' step='1'/></td>
+                                <td><input id='nRobotsSlider' type='range' min='0' value='30' max='100' step='1'/></td>
                                 <td id='nRobotsText'></td>
 
                                 <td >Actual Population</td>
@@ -324,11 +319,12 @@
 
                 </div>
 
+                <!--
+
                 <div class="gap-col"></div>
 
                 <div class="blockly-col">
 
-                    <!--<div id="blocklyDiv" style="width: 800px; height: 500px;">-->
                     <div class="blocklyDiv" id="blocklyDiv">
 
                     <div id="blocklyControlsDiv">
@@ -355,6 +351,8 @@
 
                     </div>
 
+                  -->
+
                 </div>
 
             </div>
@@ -364,9 +362,13 @@
         <script src="js/populate.js"></script>
         <script src="js/sensors.js"></script>
         <script src="js/robot.js"></script>
+        <!--
         <script src="js/blocklyConfig.js"></script>
+      -->
         <script src="js/jsControllers.js"></script>
+        <!--
         <script src="js/blocklyController.js"></script>
+      -->
         <script src="js/analysis.js"></script>
         <script src="js/CustomRender.js"></script>
         <script src="js/valueGrids.js"></script>
