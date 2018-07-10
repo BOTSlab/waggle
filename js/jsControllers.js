@@ -1,7 +1,9 @@
 /*
- * In this file we define all of the possible controller classes for robots.
- * Javascript doesn't have interfaces so we are not really enforcing this, but
- * all controllers should have a getAction method as follows:
+ * In this file we define all of the possible controller classes for robots
+ * which are encoded in regular Javascript.  The Blockly controller is in
+ * blocklyController.js.  Javascript doesn't have interfaces so we are not
+ * really enforcing this, but all controllers should have a getAction method as
+ * follows:
  *
  *      getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) 
  *
@@ -188,14 +190,17 @@ class AdvancedClusterController {
 
 class OrbitController {
     constructor() {
+        this.threshold = 0.75;
     }
 
+    /*
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
-        var avoidance = true;
-        this.action = getObstacleAvoidanceAction(sensorReadings);
-        if (!this.action) {
-            this.action = getForwardAction();
-            avoidance = false;
+        var action = getForwardAction();
+
+        if (sensorReadings.leftObstacle.count > 0) {
+            action.linearSpeed = myGlobals.MAX_FORWARD_SPEED;
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
         }
 
         var leftNest = sensorReadings.leftProbe.nestValue;
@@ -203,58 +208,169 @@ class OrbitController {
         var rightNest = sensorReadings.rightProbe.nestValue;
 
         if (rightNest >= centreNest && centreNest >= leftNest) {
-            if (centreNest >= 0.7) {
-                this.action.angularSpeed = - 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+            if (centreNest >= 0.0001) {
+                action.angularSpeed = - 0.3 * myGlobals.MAX_ANGULAR_SPEED;
             } else {
-                this.action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+                action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;                
             }
         } else if (centreNest >= rightNest && centreNest >= leftNest) {
-            this.action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
         } else {
-            this.action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
         }
 
-        return this.action;
+        action.textMessage =  centreNest;
+
+        return action;
     }
+    */
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        var action = getForwardAction();
+
+        if (sensorReadings.leftObstacle.count > 0) {
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        }
+
+        var leftNest = sensorReadings.leftProbe.nestValue;
+        var centreNest = sensorReadings.centreProbe.nestValue;
+        var rightNest = sensorReadings.rightProbe.nestValue;
+
+        if (rightNest >= centreNest && centreNest >= leftNest) {
+            // The gradient is in the desired orientation with the highest
+            // sensed value to the right, then the centre value in the middle,
+            // followed by the lowest on the left.
+
+            // We now act to maintain the centre value at the desired isoline.
+            if (centreNest < this.threshold) {
+                action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+                return action;
+            } else {
+                action.angularSpeed = -0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+                return action;
+            }
+
+        } else if (centreNest >= rightNest && centreNest >= leftNest) {
+            // We are heading uphill of the gradient, turn left to return to a
+            // clockwise orbit.
+            action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        } else {
+            // We are heading downhill, turn right to return to clockwise orbit.
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        }
+
+        // SHOULDN'T REACH HERE.
+        return null;
+    }
+
 }
 
-class ConstructionController {
+class OrbitalConstructionController {
     constructor() {
-        this.threshold = 0.6
+        this.innie = Math.random() < 0.5;
+        if (this.innie) {
+            this.threshold = 0.75
+        } else {
+            this.threshold = 0.7
+        }
+
+        this.walkaboutCount = 0;
     }
 
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
-        var avoidance = true;
-        this.action = getObstacleAvoidanceAction(sensorReadings);
-        if (!this.action) {
-            this.action = getForwardAction();
-            avoidance = false;
+        var action = getForwardAction();
+        if (this.innie) {
+            action.flashOn = true; // To visually distinguish innies/outies
+        }
+
+        if (sensorReadings.leftObstacle.count > 0) {
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
         }
 
         var leftNest = sensorReadings.leftProbe.nestValue;
         var centreNest = sensorReadings.centreProbe.nestValue;
         var rightNest = sensorReadings.rightProbe.nestValue;
+        var leftPucks = sensorReadings.leftRedPuck.count;
+        var rightPucks = sensorReadings.rightRedPuck.count;
+
+        // Potentially go on "walkabout" to search for pucks.
+        /*
+        var walkaboutAction = this.getWalkaboutAction(action, sensorReadings);
+        if (walkaboutAction != null) {
+            return walkaboutAction;
+        }
+        */
 
         if (rightNest >= centreNest && centreNest >= leftNest) {
-            if (centreNest >= this.threshold) {
-                this.action.angularSpeed = - 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+            // The gradient is in the desired orientation with the highest
+            // sensed value to the right, then the centre value in the middle,
+            // followed by the lowest on the left.
+
+            // These conditions steer in (for an innie) and out (for an outie)
+            // to nudge a puck inwards or outwards.
+            if (this.innie && rightPucks > 0) {
+                action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+                action.emitPheromone = 10.0; // For debugging
+                return action;
+            } else if (!this.innie && leftPucks > 0) {
+                action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+                action.emitPheromone = 10.0; // For debugging
+                return action;
+            } 
+
+            // We now act to maintain the centre value at the desired isoline.
+            if (centreNest < this.threshold) {
+                action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+                return action;
             } else {
-                this.action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+                action.angularSpeed = -0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+                return action;
             }
 
         } else if (centreNest >= rightNest && centreNest >= leftNest) {
-            this.action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            // We are heading uphill of the gradient, turn left to return to a
+            // clockwise orbit.
+            action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            return action;
         } else {
-            this.action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            // We are heading downhill, turn right to return to clockwise orbit.
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
         }
 
-        var leftPucks = sensorReadings.leftRedPuck.count;
-        if (leftPucks > 0 && this.threshold > 0.1) {
-            this.threshold -= 0.001
+        // SHOULDN'T REACH HERE.
+        return null;
+    }
+
+    // Check if the robot should go on "walkabout".  If so, return the
+    // appropriate action.  Otherwise, return null.
+    getWalkaboutAction(action, sensorReadings) {
+        var leftNest = sensorReadings.leftProbe.nestValue;
+        var centreNest = sensorReadings.centreProbe.nestValue;
+        var rightNest = sensorReadings.rightProbe.nestValue;
+
+        // Outies may randomly decide to go on "walkabout" for stray pucks.
+        let walkabout = false;
+        if (this.walkaboutCount > 0) {
+            walkabout = true;
+            this.walkaboutCount--;
+        } else if (!this.innie && Math.random() < 0.01) {
+            walkabout = true;
+            this.walkaboutCount = Math.floor(50 * Math.random());
+        }
+        if (walkabout) {
+            if (rightNest >= centreNest && rightNest >= leftNest) {
+                action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            } else if (leftNest >= centreNest && leftNest >= rightNest) {
+                action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            }
+            action.textMessage = "W";
+            return action;
         }
 
-        this.action.textMessage = this.threshold;
-
-        return this.action;
+        return null;
     }
 }

@@ -25,6 +25,7 @@ if (!configuration) {
 
 var myGlobals = {
     configuration: configuration,
+    usingBlockly: false,
     width : 100,
     height : 800,
     maxStep : Infinity,
@@ -37,6 +38,7 @@ var myGlobals = {
     nGreenPucks: 0,
     robotRadius: 15,
     puckRadius: 5,
+    obstacleSensorSizeFactor: 0.75,
     pheromoneDiffusionRate: 0.01,
     pheromoneDecayRate: 0.001,
     innerSensorRadius: 12.5,
@@ -44,7 +46,7 @@ var myGlobals = {
     frictionAir: 1.0,
     stepsBetweenControllerUpdates: 1,
     allowMovement: true,
-    showSensors: true,
+    showSensors: false,
     doAnalysis: true,
     showPheromoneGrid: false,
     showNestGrid: false
@@ -109,12 +111,47 @@ if (configuration == "#TUTORIAL") {
     document.getElementById('nRedPucksSlider').style.display = "none";
     document.getElementById('nRedPucksText').style.display = "none";
 } else if (configuration == "#CONSTRUCT") {
+    // Big changes from the other configurations where the robot/puck size is modified 
+    // (effects physics/speeds as well).
+    myGlobals.robotRadius = 5;
+    myGlobals.puckRadius = 6;
+    myGlobals.obstacleSensorSizeFactor = 0.15;
+    myGlobals.MAX_FORWARD_SPEED = 0.015 / 20.0;
+    myGlobals.MAX_ANGULAR_SPEED = 0.2 / 40.0;
+
+    // Changing pheromone rates just because we're using pheromones to show
+    // trails for debugging.
+    myGlobals.pheromoneDiffusionRate = 0.01;
+    myGlobals.pheromoneDecayRate = 0.001;
+
+    myGlobals.nRobots = 30;
+    myGlobals.nRedPucks = 250;
+    myGlobals.nGreenPucks = 0;
+
     myGlobals.width = 500;
     myGlobals.height = 500;
     myGlobals.showNestGrid = true;
     document.getElementById('gridSelect').value = "nest";
-    myGlobals.nRedPucks = 10;
+    document.getElementById('nGreenPucksLabel').style.display = "none";
+    document.getElementById('nGreenPucksSlider').style.display = "none";
+    document.getElementById('nGreenPucksText').style.display = "none";
+} else if (configuration == "#ENLARGED_ROBOT") {
+    // This configuration is just to obtain a bigger view of the robot and
+    // its sensors.
+    myGlobals.robotRadius = 20;
+    myGlobals.puckRadius = 24;
+    myGlobals.obstacleSensorSizeFactor = 0.15;
+    myGlobals.MAX_FORWARD_SPEED = 0.0;
+    myGlobals.MAX_ANGULAR_SPEED = 0.0;
+
+    myGlobals.nRobots = 1;
+    myGlobals.nRedPucks = 0;
     myGlobals.nGreenPucks = 0;
+
+    myGlobals.width = 500;
+    myGlobals.height = 500;
+    myGlobals.showNestGrid = true;
+    document.getElementById('gridSelect').value = "nest";
     document.getElementById('nGreenPucksLabel').style.display = "none";
     document.getElementById('nGreenPucksSlider').style.display = "none";
     document.getElementById('nGreenPucksText').style.display = "none";
@@ -146,7 +183,7 @@ var render = CustomRender.create({
     }
 });
 
-console.log("width, height: " + myGlobals.width + ", " + myGlobals.height);
+//console.log("width, height: " + myGlobals.width + ", " + myGlobals.height);
 
 const ObjectTypes = {
     ROBOT: 0x0001,
@@ -162,7 +199,7 @@ const ObjectTypes = {
 };
 
 const ObjectColours = {
-    [ObjectTypes.ROBOT]: "grey",
+    [ObjectTypes.ROBOT]: "blue", //"grey",
     [ObjectTypes.WALL]: "blue",
     [ObjectTypes.RED_PUCK]: "red",
     [ObjectTypes.GREEN_PUCK]: "green",
@@ -179,14 +216,14 @@ var simState = {
 
 var analyzer;
 
-function reset() {
+function reset(seedValue) {
     simState.step = 0;
     simState.resetTime = engine.timing.timestamp;
 
     Engine.clear(engine);
     World.clear(engine.world);
 
-    Math.seedrandom('Seed');
+    Math.seedrandom(seedValue);
     createAndAddBoundary(engine.world, myGlobals);
 
     if (configuration == "#PRE_CLUSTER") {
@@ -207,52 +244,94 @@ function reset() {
                                                 ObjectTypes.GREEN_PUCK, true);
     }
 
-    if (myGlobals.configuration == "#PHEROMONE" || 
-        myGlobals.configuration == "#CONSTRUCT") 
-    {
+    if (myGlobals.configuration == "#PHEROMONE") {
         let nestX = 250;
         let nestY = 250;
 
-        if (myGlobals.configuration == "#PHEROMONE") {
-            // Add obstacles placed to get in the way for some growth points.
-            let obs1 = Bodies.rectangle(250, 300, 300, 50, {isStatic: true});
-            let obs2 = Bodies.circle(525, 200, 100, {isStatic: true});
-            obs1.objectType = ObjectTypes.WALL;
-            obs2.objectType = ObjectTypes.WALL;
-            World.add(engine.world, [obs1, obs2]);
+        // Add obstacles placed to get in the way for some growth points.
+        let obs1 = Bodies.rectangle(250, 300, 300, 50, {isStatic: true});
+        let obs2 = Bodies.circle(525, 200, 100, {isStatic: true});
+        obs1.objectType = ObjectTypes.WALL;
+        obs2.objectType = ObjectTypes.WALL;
+        World.add(engine.world, [obs1, obs2]);
 
-            // The location of the food source will cycle between 3 points.
-            simState.growthPoints = [ {x: 75, y: 425}, 
-                                      {x: 75, y: 75}, 
-                                      {x: 425, y: 75} ];
+        // The location of the food source will cycle between 3 points.
+        simState.growthPoints = [ {x: 75, y: 425}, 
+                                  {x: 75, y: 75}, 
+                                  {x: 425, y: 75} ];
 
-            simState.greenPucks = [];
+        simState.greenPucks = [];
 
-            nestX = 450;
-            nestY = 450;
-        }
+        nestX = 450;
+        nestY = 450;
 
         simState.pheromoneGrid = getZeroGrid(myGlobals.gridWidth, myGlobals.gridHeight);
 
         // Create nest and its scent grid.
-        simState.nest = new Nest(myGlobals, nestX, nestY, 2*myGlobals.robotRadius, engine.world, simState.greenPucks);
+        simState.nest = new Nest(myGlobals, nestX, nestY, engine.world, simState.greenPucks);
         let nestI = Math.floor(myGlobals.gridWidth * nestX /myGlobals.width);
         let nestJ = Math.floor(myGlobals.gridHeight * nestY /myGlobals.height);
         simState.nestGrid = getDistanceGrid(nestI, nestJ, myGlobals.gridWidth,
                                             myGlobals.gridHeight);
     }
 
+    if (myGlobals.configuration == "#CONSTRUCT" ||
+        myGlobals.configuration == "#ENLARGED_ROBOT") {
+        simState.pheromoneGrid = getZeroGrid(myGlobals.gridWidth, myGlobals.gridHeight);
+
+        // Create nest scent grid (but no actual Nest).
+        let nestX = 250;
+        let nestY = 250;
+        let nestI = Math.floor(myGlobals.gridWidth * nestX /myGlobals.width);
+        let nestJ = Math.floor(myGlobals.gridHeight * nestY /myGlobals.height);
+        simState.nestGrid = getDistanceGrid(nestI, nestJ, myGlobals.gridWidth,
+                                            myGlobals.gridHeight);
+
+        /*
+        let x1 = 100
+        let y1 = 250
+        let x2 = 400
+        let y2 = 250
+        let x1_grid = Math.floor(myGlobals.gridWidth * x1 /myGlobals.width);
+        let y1_grid = Math.floor(myGlobals.gridHeight * y1 /myGlobals.height);
+        let x2_grid = Math.floor(myGlobals.gridWidth * x2 /myGlobals.width);
+        let y2_grid = Math.floor(myGlobals.gridHeight * y2 /myGlobals.height);
+        let gridA = getDistanceToSegmentGrid(myGlobals.gridWidth, myGlobals.gridHeight, x1_grid, y1_grid, x2_grid, y2_grid);
+        //simState.nestGrid = gridA;
+
+        x1 = 250
+        y1 = 100
+        x2 = 250 
+        y2 = 400
+        x1_grid = Math.floor(myGlobals.gridWidth * x1 /myGlobals.width);
+        y1_grid = Math.floor(myGlobals.gridHeight * y1 /myGlobals.height);
+        x2_grid = Math.floor(myGlobals.gridWidth * x2 /myGlobals.width);
+        y2_grid = Math.floor(myGlobals.gridHeight * y2 /myGlobals.height);
+        gridB = getDistanceToSegmentGrid(myGlobals.gridWidth, myGlobals.gridHeight, x1_grid, y1_grid, x2_grid, y2_grid);
+
+        simState.nestGrid = combineGrids(gridA, gridB, myGlobals.gridWidth, myGlobals.gridHeight);
+
+        //myGlobals.screenshotCaptureSteps = [10, 100, 1000, 2000, 3000, 4000, 5000, 10000, 15000, 20000];
+        */
+        myGlobals.screenshotCaptureSteps = [];
+        myGlobals.maxStep = 20000000;
+    }
+
     simState.robots = [];
 
     if (myGlobals.doAnalysis) {
-        analyzer = new Analyzer(myGlobals);
+        if (!analyzer) {
+            analyzer = new Analyzer(myGlobals);
+        } else {
+            analyzer.reset();
+        }
     }
 
     addMouseControl();
 }
 
 // Reset for initial creation.
-reset();
+reset('Seed');
 
 engine.world.gravity.y = 0;
 
@@ -289,8 +368,21 @@ function update() {
         CustomRender.world(render, simState.robots);
     }
 
-    if (myGlobals.doAnalysis) {
-        analyzer.analyze(engine.timing.timestamp-simState.resetTime, simState);
+    if (myGlobals.doAnalysis && simState.step <= myGlobals.maxStep) {
+        analyzer.analyze(engine.timing.timestamp-simState.resetTime, simState,
+                         simState.step == myGlobals.maxStep);
+    }
+
+    // Capture screnshot
+    if (myGlobals.configuration == "#CONSTRUCT") {
+        if (myGlobals.screenshotCaptureSteps.find(function(element) {
+            return element == simState.step;
+        })) {
+            var step = simState.step 
+            render.canvas.toBlob(function(blob) {
+                saveAs(blob, step + ".png"); 
+            });
+        }
     }
 
     simState.step++;
@@ -315,9 +407,9 @@ function manageRobotPopulation() {
         //robot.controller = new TestController();
         //robot.controller = new SimpleAvoidController();
         //robot.controller = new AdvancedClusterController();
-        robot.controller = new BlocklyController();        
+        //robot.controller = new BlocklyController();        
         //robot.controller = new OrbitController();
-        //robot.controller = new ConstructionController();
+        robot.controller = new OrbitalConstructionController();
         simState.robots.push(robot);
     }
     if (simState.robots.length > myGlobals.nRobots) {
@@ -610,51 +702,55 @@ Runner.run(runner, engine);
 // Blockly related
 //
 
-var clearButton = document.getElementById('clearButton');
-clearButton.addEventListener("click", function() {
-    Blockly.mainWorkspace.clear();
-});
+if (myGlobals.usingBlockly) {
 
-var saveButton = document.getElementById('saveButton');
-saveButton.addEventListener("click", function() {
-    // Get the xml for the current workspace.
-    var xml = Blockly.Xml.workspaceToDom(workspace);
-    var xml_text = Blockly.Xml.domToText(xml);
+    var clearButton = document.getElementById('clearButton');
+    clearButton.addEventListener("click", function() {
+        Blockly.mainWorkspace.clear();
+    });
 
-    var filename = document.getElementById('saveFileName').value;
-    var blob = new Blob([xml_text], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, filename);
-});
+    var saveButton = document.getElementById('saveButton');
+    saveButton.addEventListener("click", function() {
+        // Get the xml for the current workspace.
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var xml_text = Blockly.Xml.domToText(xml);
 
-function loadFile(o) {
-    var fr = new FileReader();
-    fr.onload = function(e) {
-        var xml_text = e.target.result;
-        var xml = Blockly.Xml.textToDom(xml_text);
-        Blockly.Xml.domToWorkspace(xml, workspace);
-    };
-    fr.readAsText(o.files[0]);
+        var filename = document.getElementById('saveFileName').value;
+        var blob = new Blob([xml_text], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, filename);
+    });
+
+    function loadFile(o) {
+        var fr = new FileReader();
+        fr.onload = function(e) {
+            var xml_text = e.target.result;
+            var xml = Blockly.Xml.textToDom(xml_text);
+            Blockly.Xml.domToWorkspace(xml, workspace);
+        };
+        fr.readAsText(o.files[0]);
+    }
+
+    var fileLoader = document.getElementById('fileLoader');
+    fileLoader.addEventListener("change", function() {
+        loadFile(this);
+    });
+
+    var showJSButton = document.getElementById('showJSButton');
+    showJSButton.addEventListener("click", function() {
+        Blockly.JavaScript.addReservedWords('code');
+        var code = Blockly.JavaScript.workspaceToCode();
+        alert(code);
+        console.log(code);
+    });
+
+    var showXMLButton = document.getElementById('showXMLButton');
+    showXMLButton.addEventListener("click", function() {
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var xml_text = Blockly.Xml.domToText(xml);
+        alert(xml_text);
+    });
+
 }
-
-var fileLoader = document.getElementById('fileLoader');
-fileLoader.addEventListener("change", function() {
-    loadFile(this);
-});
-
-var showJSButton = document.getElementById('showJSButton');
-showJSButton.addEventListener("click", function() {
-    Blockly.JavaScript.addReservedWords('code');
-    var code = Blockly.JavaScript.workspaceToCode();
-    alert(code);
-    console.log(code);
-});
-
-var showXMLButton = document.getElementById('showXMLButton');
-showXMLButton.addEventListener("click", function() {
-    var xml = Blockly.Xml.workspaceToDom(workspace);
-    var xml_text = Blockly.Xml.domToText(xml);
-    alert(xml_text);
-});
 
 //
 // Matter related
@@ -662,6 +758,11 @@ showXMLButton.addEventListener("click", function() {
 
 var resetButton = document.getElementById('resetButton');
 resetButton.addEventListener("click", function() {
+    reset('Seed');
+});
+
+var reseedAndResetButton = document.getElementById('reseedAndResetButton');
+reseedAndResetButton.addEventListener("click", function() {
     reset();
 });
 
@@ -682,9 +783,7 @@ showSensorsCheckbox.addEventListener("change", function() {
 
     for (let i=0; i<simState.robots.length; i++) {
         let robot = simState.robots[i];
-        for (let key in robot.sensors) {
-            robot.sensors[key].body.render.visible = myGlobals.showSensors;
-        }
+        robot.updateSensorVisibility(myGlobals.showSensors);
     }
 });
 

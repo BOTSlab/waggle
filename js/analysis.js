@@ -46,11 +46,11 @@ class Analyzer {
             // PLACEHOLDER
             this.chart = Highcharts.chart('chartDiv', {
                             chart: { animation: false },
-                            title: { text: '???' },
+                            title: { text: 'Avg. Puck-Tau Abs. Diff.' },
                             yAxis: { title: { text: '' } },
                             xAxis: { title: { text: 'Time' } },
                             legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle' },
-                            series: [{ name: '???', data: [] }],
+                            series: [{ name: '0', data: [] }],
                             redraw: false
                         });
         }
@@ -61,9 +61,16 @@ class Analyzer {
         this.puckDistanceThreshold = 4.0 * myGlobals.puckRadius;
 
         this.lastRedrawTimeSecs = 0;
+
+        // Keep track of the index of the data series.  New ones are added by
+        // calls to 'reset'.
+        this.seriesIndex = 0;
+
+        // The data used to compute the average.
+        this.averageMap = new Map();
     }
 
-    analyze(timestamp, simState) {
+    analyze(timestamp, simState, forceRedraw) {
         let value = 0;
         let config = myGlobals.configuration;
         if (config == "#SIMPLE_CLUSTER" || config == "#ADVANCED_CLUSTER") {
@@ -77,19 +84,55 @@ class Analyzer {
         } else if (config == "#PHEROMONE") {
             value = simState.greenPucks.length;
         } else if (config == "#CONSTRUCT") {
-            // PLACEHOLDER
-            value = 0;
+            value = this.getAveragePuckTauDifference(simState.redPucks, 
+                                                    simState.nestGrid);
         }
 
         let timeSecs = timestamp/1000;
-        if (timeSecs - this.lastRedrawTimeSecs >= 1) {
+        //console.log(this.seriesIndex);
+        if (forceRedraw || timeSecs - this.lastRedrawTimeSecs >= 1) {
             // Add point and redraw
-            this.chart.series[0].addPoint([timeSecs, value], true);
+            this.chart.series[this.seriesIndex].addPoint([timeSecs, value], true);
             this.lastRedrawTimeSecs = timeSecs;
         } else {
             // Add point, but defer the redraw.
-            this.chart.series[0].addPoint([timeSecs, value], false);
+            this.chart.series[this.seriesIndex].addPoint([timeSecs, value], false);
         }
+
+        // Compute the average value (over this and past series)
+        if (!this.averageMap.get(timeSecs)) {
+            this.averageMap.set(timeSecs, [value]);
+
+        } else {
+            let array = this.averageMap.get(timeSecs);
+            array.push(value);
+            let sum = array.reduce((a, b) => a + b, 0);
+            let average = sum / array.length;
+            
+            if (this.seriesIndex > 0) {
+                this.chart.series[this.seriesIndex+1].addPoint([timeSecs, average], true);
+            }
+        }
+
+    }
+
+    reset() {
+        // Remove the average plot
+        if (this.seriesIndex > 0) {
+            this.chart.series[this.seriesIndex+1].remove();
+        }
+
+        this.seriesIndex++;
+
+        this.chart.addSeries({
+            name: this.seriesIndex,
+            data: []
+        });
+
+        this.chart.addSeries({
+            name: "Average",
+            data: []
+        });
     }
 
     // Return the percentage completion as defined in "Cache consensus:
@@ -208,5 +251,28 @@ class Analyzer {
         }
 
         return secMoment;
+    }
+
+    getAveragePuckTauDifference(pucks, grid) {
+        // Target tau value
+        let tau = 0.725;
+        
+        let n = pucks.length;
+        let sum= 0
+        for (let i=0; i<n; i++) {
+            let px = pucks[i].position.x;
+            let py = pucks[i].position.y;
+
+            // Get the value of the nest grid at the puck position.
+            let grid_i = Math.floor(myGlobals.gridWidth * px/myGlobals.width);
+            let grid_j = Math.floor(myGlobals.gridHeight * py/myGlobals.height);
+            let absDiffFromTau = Math.abs(grid[grid_i][grid_j] - tau)
+            sum += absDiffFromTau
+        }
+
+        if (n > 0)
+            sum /= 1.0 * n;
+
+        return sum;
     }
 }

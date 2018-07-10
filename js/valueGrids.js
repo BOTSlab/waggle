@@ -28,19 +28,14 @@ function getZeroGrid(width, height) {
     return grid;
 }
 
-function getDistanceGrid(x, y, width, height) {
-    let grid = getZeroGrid(width, height);
-
+function normalizeGrid(grid, width, height) {
     let maxDistance = 0;
     for (let i=0; i<width; i++) {
         for (let j=0; j<height; j++) {
-            let dx = i - x;
-            let dy = j - y;
-            let distance = Math.sqrt(dx*dx + dy*dy);
+            let distance = grid[i][j]
             if (distance > maxDistance) {
                 maxDistance = distance;
             }
-            grid[i][j] = distance;
         }
     }
 
@@ -51,9 +46,59 @@ function getDistanceGrid(x, y, width, height) {
             grid[i][j] = 1 - grid[i][j] / maxDistance;
         }
     }
+}
+
+function getDistanceGrid(cx, cy, width, height) {
+    let grid = getZeroGrid(width, height);
+
+    for (let i=0; i<width; i++) {
+        for (let j=0; j<height; j++) {
+            let dx = i - cx;
+            let dy = j - cy;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+            grid[i][j] = distance;
+        }
+    }
+
+    normalizeGrid(grid, width, height);
 
     return grid;
 }
+
+// Get the distances to the line segment specified by points (x1, y1) and (x2,
+// y2).  Uses functions defined in distToSegment.js.
+function getDistanceToSegmentGrid(width, height, x1, y1, x2, y2) {
+    let grid = getZeroGrid(width, height);
+
+    v = { x: x1, y: y1 };
+    w = { x: x2, y: y2 };
+
+    for (let i=0; i<width; i++) {
+        for (let j=0; j<height; j++) {
+            p = { x: i, y: j };
+            grid[i][j] = distToSegment(p, v, w)
+        }
+    }
+
+    normalizeGrid(grid, width, height);
+
+    return grid;
+}
+
+function combineGrids(gridA, gridB, width, height) {
+    let grid = getZeroGrid(width, height);
+
+    for (let i=0; i<width; i++) {
+        for (let j=0; j<height; j++) {
+            grid[i][j] = 1.0 - Math.max(gridA[i][j], gridB[i][j])
+        }
+    }
+
+    normalizeGrid(grid, width, height);
+
+    return grid;
+}
+
 
 function gridDiffuseAndDecay(myGlobals, grid) {
     var oldGrid = grid.slice(0);

@@ -5,7 +5,9 @@
  */
 
 class Nest extends Sensor {
-    constructor(myGlobals, x, y, r, world, greenPucks) {
+    constructor(myGlobals, x, y, world, greenPucks) {
+        let r = 2*myGlobals.robotRadius;
+
         let colour = ObjectColours[ObjectTypes.NEST];
 
         let body = Bodies.circle(x, y, r, {isSensor: true, isStatic: true});

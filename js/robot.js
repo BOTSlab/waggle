@@ -65,7 +65,8 @@ class Robot {
             // clustering/sorting because it induces longer-distance
             // grabs/releases which can mess up clusters.
             this.addInnerGreenSensor(x, y, myGlobals, 2*myGlobals.innerSensorRadius);
-        } else if (myGlobals.configuration == "#CONSTRUCT") {
+        } else if (myGlobals.configuration == "#CONSTRUCT" ||
+                   myGlobals.configuration == "#ENLARGED_ROBOT") {
             this.addConstructSensors(x, y, myGlobals);
         }
 
@@ -83,7 +84,6 @@ class Robot {
             sensorBody.inverseInertia = Infinity;
 
             // Visual properties.
-            sensorBody.render.visible = myGlobals.showSensors;
             sensorBody.render.strokeStyle = "blue";
             sensorBody.render.fillStyle = "blue";
             sensorBody.render.opacity = 0.40;
@@ -120,7 +120,8 @@ class Robot {
         // which which give the points at which the robot can sample the grid.
         this.gridProbes = {};
         if (myGlobals.configuration == "#PHEROMONE" ||
-            myGlobals.configuration == "#CONSTRUCT") {
+            myGlobals.configuration == "#CONSTRUCT" ||
+            myGlobals.configuration == "#ENLARGED_ROBOT") {
             let angle = Math.PI/4.0;
             let distance = 2*myGlobals.robotRadius;
 
@@ -135,6 +136,8 @@ class Robot {
             this.gridProbes.centreProbe = { distance: distance, angle: Math.PI/2 };
             this.gridProbes.rightProbe = { distance: distance, angle: Math.PI/2 + angle };
         } */
+
+        this.updateSensorVisibility(myGlobals.showSensors);
 
         World.add(world, [this.body]);
     }
@@ -194,7 +197,7 @@ class Robot {
 
     addObstacleSensors(x, y, myGlobals) {
         let rr = myGlobals.robotRadius;
-        let r = 0.75 * rr;
+        let r = myGlobals.obstacleSensorSizeFactor * rr;
 
         // Left sensor
         let angle = -Math.PI/4;
@@ -260,20 +263,36 @@ class Robot {
         let rr = myGlobals.robotRadius;
         let pr = myGlobals.puckRadius;
 
-        let depth = rr * 10;
+        let depth = rr * 4;
         let width = rr * 10;
+        //let width = rr * 4;
         let chamfer = 0;
         let leftBody = Bodies.rectangle(x + rr + 1*pr + depth/2, y - width/2 - 0*pr, depth, width, {isSensor: true, chamfer: chamfer});
         this.sensors.leftRedPuck = new PuckSensor(leftBody, this, ObjectTypes.RED_PUCK);
 
-        let rightBody = Bodies.rectangle(x + rr + 1*pr + depth/2, y + width/2 + 0*pr, depth, width, {isSensor: true, chamfer: chamfer});
+        // The right sensor will be shifted further to the right by this amount.
+        let rightShift = 0;
+        let rightBody = Bodies.rectangle(x + rr + 1*pr + depth/2, y + width/2 + 0*pr + rightShift, depth, width, {isSensor: true, chamfer: chamfer});
         this.sensors.rightRedPuck = new PuckSensor(rightBody, this, ObjectTypes.RED_PUCK);
+    }
+
+    updateSensorVisibility(showSensors) {
+        for (let key in this.sensors) {
+            this.sensors[key].body.render.visible = showSensors;
+        }
+        this.showExtraInfo = showSensors;
     }
 
     // Called by the renderer to draw additional components on top of the
     // robot.
     drawExtraInfo(context) {
+
+        context.fillStyle = "cyan";
         context.fillText(this.text, this.x, this.y);
+
+        if (!this.showExtraInfo) {
+            return;
+        }
 
         context.beginPath();
         for (let key in this.gridProbes) {
@@ -282,7 +301,7 @@ class Robot {
             let x = this.x + gp.distance*Math.cos(this.body.angle + gp.angle); 
             let y = this.y + gp.distance*Math.sin(this.body.angle + gp.angle); 
  
-            context.rect(x, y, 3, 3);
+            context.rect(x, y, 1, 1);
         }
         context.strokeStyle = "purple";
         context.stroke();
