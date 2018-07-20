@@ -11,7 +11,7 @@
           gtag('config', 'UA-111922440-2');
         </script>
 
-        <title>Waggle 1.0</title>
+        <title>Waggle 1.1</title>
 
         <!--        <link rel="stylesheet" href="css/normalize.css"> -->
         <!--        <link rel="stylesheet" href="css/main.css"> -->
@@ -247,6 +247,7 @@
 
         <!-- For plotting. -->
         <script src="js/vendor/highcharts.js"></script>
+        <script src="https://code.highcharts.com/modules/exporting.js"></script>
 
         <!-- For saving the blocks to a local file. -->
         <script src="js/vendor/FileSaver.min.js"></script>
@@ -273,14 +274,10 @@
                             <tr>
                             <td><button type="button" id="resetButton">Reset</button></td>
                             <td><button type="button" id="reseedAndResetButton">Reseed and Reset</button></td>
-                            <td><input type="checkbox" id="allowMovementCheckbox">Allow Movement</input></td>
+                            <td><input type="checkbox" id="allowMovementCheckbox">Allow Movement?</input></td>
                             
-                            <td><input type="checkbox" id="showSensorsCheckbox">Show Sensors</input></td>
+                            <td><input type="checkbox" id="showSensorsCheckbox">Show Sensors?</input></td>
 
-                            <td>
-                              <input type="checkbox" id="doAnalysisCheckbox"></input>
-                              <td id='doAnalysisText'>Analysis</td></tr> 
-                            </td>
                             </tr>
 
                             <tr><td>Timescale </td>
@@ -305,6 +302,11 @@
                                 <td id='nGreenPucksText'></td></tr> 
 
                             <tr>
+                                <td id='maxStepLabel'>Max. Step</td>
+                                <td><input id='maxStepSlider' type='range' min='0' value='0' max='100000' step='1000'/></td>
+                                <td id='maxStepText'></td></tr> 
+
+                            <tr>
                                 <div id="gridDiv">
                                     Select grid visibility:
                                     <select id="gridSelect">
@@ -315,6 +317,18 @@
                                 </div>
                             </tr>
 
+                        </table>
+                    </div>
+
+                    <div id="analysisControlsDiv">
+                        <table cellpadding="2" style="width: 100%">
+                            <tr>
+                            <td><button type="button" id="clearPlotsAndResetButton">Clear Plots and Reset</button></td>
+                            <td><input type="checkbox" id="doAnalysisCheckbox"></input></td>
+                            <td id='doAnalysisText'>Plot?</td>
+
+                            <td><input type="checkbox" id="resetAfterMaxStepCheckbox">Reset After Max. Step?</input></td>
+                            </tr>
                         </table>
                     </div>
 
@@ -337,7 +351,7 @@
                             <td><button type="button" id="clearButton">Clear</button></td>
 
                             <td><div class="file-box">
-                                <label>Load</label>
+                                <label id="loadLabel">Load</label>
                                 <input type="file" id="fileLoader" value="pheromone_test.xml"></input></div></td>
 
                             <td><div class="file-box">
@@ -364,7 +378,6 @@
         <script src="js/populate.js"></script>
         <script src="js/sensors.js"></script>
         <script src="js/robot.js"></script>
-        <script src="js/blocklyConfig.js"></script>
         <script src="js/jsControllers.js"></script>
         <script src="js/blocklyController.js"></script>
         <script src="js/analysis.js"></script>
@@ -373,6 +386,7 @@
         <script src="js/distToSegment.js"></script>
         <script src="js/nest.js"></script>
         <script src="js/main.js"></script>
+        <script src="js/blocklyConfig.js"></script>
 
     </body>
 </html>

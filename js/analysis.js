@@ -7,9 +7,9 @@ class Analyzer {
                             chart: { animation: false },
                             title: { text: 'Percentage Completion (PC)' },
                             yAxis: { title: { text: '' } },
-                            xAxis: { title: { text: 'Time' } },
+                            xAxis: { title: { text: 'Time Steps' } },
                             legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle' },
-                            series: [{ name: 'PC', data: [] }],
+                            series: [{ name: '0', data: [] }],
                             redraw: false
                         }); 
         } else if (config == "#FIREFLY") {
@@ -17,9 +17,9 @@ class Analyzer {
                             chart: { animation: false },
                             title: { text: 'Number of Flashes' },
                             yAxis: { title: { text: '' } },
-                            xAxis: { title: { text: 'Time' } },
+                            xAxis: { title: { text: 'Time Steps' } },
                             legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle' },
-                            series: [{ name: '# Flashes', data: [] }],
+                            series: [{ name: '0', data: [] }],
                             redraw: false
                         });
         } else if (config == "#SORT") {
@@ -27,9 +27,9 @@ class Analyzer {
                             chart: { animation: false },
                             title: { text: 'Percentage Completion (PC)' },
                             yAxis: { title: { text: '' } },
-                            xAxis: { title: { text: 'Time' } },
+                            xAxis: { title: { text: 'Time Steps' } },
                             legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle' },
-                            series: [{ name: 'PC', data: [] }],
+                            series: [{ name: '0', data: [] }],
                             redraw: false
                         });
         } else if (config == "#PHEROMONE") {
@@ -37,22 +37,25 @@ class Analyzer {
                             chart: { animation: false },
                             title: { text: 'Food (Green) Pucks' },
                             yAxis: { title: { text: '' } },
-                            xAxis: { title: { text: 'Time' } },
+                            xAxis: { title: { text: 'Time Steps' } },
                             legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle' },
-                            series: [{ name: 'Green Pucks', data: [] }],
+                            series: [{ name: '0', data: [] }],
                             redraw: false
                         });
         } else if (config == "#CONSTRUCT") {
             this.chart = Highcharts.chart('chartDiv', {
                             chart: { animation: false },
-                            title: { text: 'Avg. Puck-Tau Abs. Diff.' },
-                            yAxis: { title: { text: '' } },
-                            xAxis: { title: { text: 'Time' } },
+                            //title: { text: 'Avg. Puck-Tau Abs. Diff.' },
+                            title: { text: 'Percentage Connected Pucks (PCP)' },
+                            yAxis: { title: { text: '' }, max: 100, min: 0 },
+                            xAxis: { title: { text: 'Time Steps' } },
                             legend: { layout: 'vertical', align: 'right', verticalAlign: 'middle' },
                             series: [{ name: '0', data: [] }],
-                            redraw: false
+                            redraw: false,
+                            navigation: { buttonOptions: { enabled: true } }
                         });
         }
+
                        
         // (For clustering/sorting only) The threshold distance parmater which
         // controls whether two pucks are close enough to have an edge between
@@ -70,6 +73,9 @@ class Analyzer {
     }
 
     analyze(timestamp, simState, forceRedraw) {
+        if (simState.step % 100 != 0)
+            return;
+
         let value = 0;
         let config = myGlobals.configuration;
         if (config == "#SIMPLE_CLUSTER" || config == "#ADVANCED_CLUSTER") {
@@ -83,8 +89,9 @@ class Analyzer {
         } else if (config == "#PHEROMONE") {
             value = simState.greenPucks.length;
         } else if (config == "#CONSTRUCT") {
-            value = this.getAveragePuckTauDifference(simState.redPucks, 
-                                                    simState.nestGrid);
+            //value = this.getAveragePuckTauDifference(simState.redPucks, 
+            //                                        simState.nestGrid);
+            value = this.getPercentageCompletion(simState.redPucks);
         }
 
         let timeSecs = timestamp/1000;
@@ -93,7 +100,8 @@ class Analyzer {
         // Compute the average value (over this and past series).  We will
         // use the time as the key into 'averageMap' but it may differ slightly
         // on subsequent runs.  So we truncate it to three digits here.
-        let timeKey = timeSecs.toFixed(3);
+        //let timeKey = timeSecs.toFixed(3);
+        let timeKey = simState.step;
         if (!this.averageMap.get(timeKey)) {
             this.averageMap.set(timeKey, [value]);
 
@@ -104,7 +112,7 @@ class Analyzer {
             let average = sum / array.length;
             
             if (this.seriesIndex > 0) {
-                this.chart.series[this.seriesIndex+1].addPoint([timeSecs,
+                this.chart.series[this.seriesIndex+1].addPoint([timeKey,
                                                                average],
                                                                drawNow);
             }
@@ -112,12 +120,12 @@ class Analyzer {
 
         if (drawNow) {
             // Add point and redraw
-            this.chart.series[this.seriesIndex].addPoint([timeSecs, value],
+            this.chart.series[this.seriesIndex].addPoint([timeKey, value],
                                                          true);
             this.lastRedrawTimeSecs = timeSecs;
         } else {
             // Add point, but defer the redraw.
-            this.chart.series[this.seriesIndex].addPoint([timeSecs, value],
+            this.chart.series[this.seriesIndex].addPoint([timeKey, value],
                                                          false);
         }
 
@@ -139,7 +147,7 @@ class Analyzer {
         this.chart.addSeries({
             name: "Average",
             data: [],
-            lineWidth: 10,
+            lineWidth: 8,
             marker: {
                 enabled: false
             }

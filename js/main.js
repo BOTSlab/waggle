@@ -25,10 +25,10 @@ if (!configuration) {
 
 var myGlobals = {
     configuration: configuration,
-    usingBlockly: false,
+    usingBlockly: true,
     width : 100,
     height : 800,
-    maxStep : Infinity,
+    maxStep : 100000,
     MAX_FORWARD_SPEED: 0.015,
     MAX_ANGULAR_SPEED: 0.2,
     wallThickness: 100,
@@ -48,6 +48,7 @@ var myGlobals = {
     allowMovement: true,
     showSensors: false,
     doAnalysis: true,
+    resetAfterMaxStep: false,
     showPheromoneGrid: false,
     showNestGrid: false
 };
@@ -66,13 +67,11 @@ if (configuration == "#TUTORIAL") {
     document.getElementById('nGreenPucksText').style.display = "none";
     document.getElementById('gridDiv').style.display = "none";
     myGlobals.doAnalysis = false;
-    document.getElementById('doAnalysisCheckbox').style.display = "none";
-    document.getElementById('doAnalysisText').style.display = "none";
+    document.getElementById('analysisControlsDiv').style.display = "none";
 } else if (configuration == "#PRE_CLUSTER" || configuration == "#SIMPLE_CLUSTER" || configuration == "#ADVANCED_CLUSTER") {
     if (configuration == "#PRE_CLUSTER") {
         myGlobals.doAnalysis = false;
-        document.getElementById('doAnalysisCheckbox').style.display = "none";
-        document.getElementById('doAnalysisText').style.display = "none";
+        document.getElementById('analysisControlsDiv').style.display = "none";
     }
     myGlobals.width = 500;
     myGlobals.height = 500;
@@ -111,6 +110,8 @@ if (configuration == "#TUTORIAL") {
     document.getElementById('nRedPucksSlider').style.display = "none";
     document.getElementById('nRedPucksText').style.display = "none";
 } else if (configuration == "#CONSTRUCT") {
+    myGlobals.usingBlockly = false;
+
     // Big changes from the other configurations where the robot/puck size is modified 
     // (effects physics/speeds as well).
     myGlobals.robotRadius = 5;
@@ -126,15 +127,18 @@ if (configuration == "#TUTORIAL") {
 
     myGlobals.nRobots = 30;
     myGlobals.nRedPucks = 250;
-    myGlobals.nGreenPucks = 0;
+    //myGlobals.nRedPucks = 100;
+    myGlobals.nGreenPucks = 250;
+    myGlobals.maxStep = 500;
 
     myGlobals.width = 500;
     myGlobals.height = 500;
     myGlobals.showNestGrid = true;
     document.getElementById('gridSelect').value = "nest";
-    document.getElementById('nGreenPucksLabel').style.display = "none";
-    document.getElementById('nGreenPucksSlider').style.display = "none";
-    document.getElementById('nGreenPucksText').style.display = "none";
+    //document.getElementById('nGreenPucksLabel').style.display = "none";
+    //document.getElementById('nGreenPucksSlider').style.display = "none";
+    //document.getElementById('nGreenPucksText').style.display = "none";
+    document.getElementById('blocklyControlsDiv').style.display = "none";
 } else if (configuration == "#ENLARGED_ROBOT") {
     // This configuration is just to obtain a bigger view of the robot and
     // its sensors.
@@ -160,13 +164,16 @@ if (configuration == "#TUTORIAL") {
 // Further html customization which is independent of the configuration.
 document.getElementById('allowMovementCheckbox').checked = myGlobals.allowMovement;
 document.getElementById('showSensorsCheckbox').checked = myGlobals.showSensors;
-document.getElementById('doAnalysisCheckbox').checked = myGlobals.doAnalysis;
 document.getElementById('nRobotsSlider').value = myGlobals.nRobots;
 document.getElementById('nRobotsText').innerHTML = myGlobals.nRobots;
 document.getElementById('nRedPucksSlider').value = myGlobals.nRedPucks;
 document.getElementById('nRedPucksText').innerHTML = myGlobals.nRedPucks;
 document.getElementById('nGreenPucksSlider').value = myGlobals.nGreenPucks;
 document.getElementById('nGreenPucksText').innerHTML = myGlobals.nGreenPucks;
+document.getElementById('maxStepSlider').value = myGlobals.maxStep;
+document.getElementById('maxStepText').innerHTML = myGlobals.maxStep;
+document.getElementById('doAnalysisCheckbox').checked = myGlobals.doAnalysis;
+document.getElementById('resetAfterMaxStepCheckbox').checked = myGlobals.resetAfterMaxStep;
 
 // The following properties depend on width and height defined above.
 myGlobals.gridWidth = myGlobals.width / 10;
@@ -212,6 +219,9 @@ const ObjectColours = {
 
 var simState = {
     // Properties are added in 'reset' below.
+
+    // EXPERIMENTAL:
+    trials: 1
 };
 
 var analyzer;
@@ -310,12 +320,13 @@ function reset(seedValue) {
         gridB = getDistanceToSegmentGrid(myGlobals.gridWidth, myGlobals.gridHeight, x1_grid, y1_grid, x2_grid, y2_grid);
 
         simState.nestGrid = combineGrids(gridA, gridB, myGlobals.gridWidth, myGlobals.gridHeight);
+        */
 
         //myGlobals.screenshotCaptureSteps = [10, 100, 1000, 2000, 3000, 4000, 5000, 10000, 15000, 20000];
-        */
-        myGlobals.screenshotCaptureSteps = [];
-        myGlobals.maxStep = 2000;
     }
+
+    // Capture final screenshot
+    myGlobals.screenshotCaptureSteps = [myGlobals.maxStep];
 
     simState.robots = [];
 
@@ -373,16 +384,27 @@ function update() {
                          simState.step == myGlobals.maxStep);
     }
 
-    // Capture screnshot
-    if (myGlobals.configuration == "#CONSTRUCT") {
-        if (myGlobals.screenshotCaptureSteps.find(function(element) {
-            return element == simState.step;
-        })) {
-            var step = simState.step 
-            render.canvas.toBlob(function(blob) {
-                saveAs(blob, step + ".png"); 
-            });
-        }
+    // Potentially capture screnshot
+    if (myGlobals.screenshotCaptureSteps.find(function(element) {
+        return element == simState.step;
+    })) {
+    /*
+    }) || (simState.step <= myGlobals.maxStep && simState.step % 10 == 0)) {
+    */
+        var step = simState.step 
+        render.canvas.toBlob(function(blob) {
+            //saveAs(blob, (step/10 + ".png").padStart(11, "0")); 
+            saveAs(blob, ("trial_" + simState.trials + "_step_" + step +".png"));
+        });
+    }
+
+    // Potentially reset so that the analyzer can plot a new trial.
+    if (myGlobals.resetAfterMaxStep && 
+        simState.step == myGlobals.maxStep &&
+        simState.trials < 10)
+    {
+        simState.trials++;
+        reset();
     }
 
     simState.step++;
@@ -404,12 +426,16 @@ function manageRobotPopulation() {
 
         // Create one robot per time step.
         var robot = new Robot(engine.world, myGlobals);
-        //robot.controller = new TestController();
-        //robot.controller = new SimpleAvoidController();
-        //robot.controller = new AdvancedClusterController();
-        robot.controller = new BlocklyController();        
-        //robot.controller = new OrbitController();
-        //robot.controller = new OrbitalConstructionController();
+        if (myGlobals.usingBlockly) {
+            robot.controller = new BlocklyController();        
+        } else { 
+            //robot.controller = new TestController();
+            //robot.controller = new SimpleAvoidController();
+            //robot.controller = new AdvancedClusterController();
+            //robot.controller = new OrbitController();
+            //robot.controller = new OrbitalConstructionController();
+            robot.controller = new OrbitalConstructionBiColourController();
+        }
         simState.robots.push(robot);
     }
     if (simState.robots.length > myGlobals.nRobots) {
@@ -772,12 +798,7 @@ allowMovementCheckbox.addEventListener("change", function() {
     //console.log("ALLOW MOVEMENT - " + this.checked);
 });
 
-var doAnalysisCheckbox = document.getElementById('doAnalysisCheckbox');
-doAnalysisCheckbox.addEventListener("change", function() {
-    myGlobals.doAnalysis = this.checked;
-});
-
-var doAnalysisCheckbox = document.getElementById('showSensorsCheckbox');
+var showSensorsCheckbox = document.getElementById('showSensorsCheckbox');
 showSensorsCheckbox.addEventListener("change", function() {
     myGlobals.showSensors = this.checked;
 
@@ -817,6 +838,29 @@ document.getElementById('nGreenPucksSlider').oninput = function () {
     document.getElementById('nGreenPucksText').innerHTML = value + 
         " (click Reset)";
 }
+
+document.getElementById('maxStepSlider').oninput = function () {
+    var value = document.getElementById('maxStepSlider').value;
+    myGlobals.maxStep = value;
+    document.getElementById('maxStepText').innerHTML = value;
+}
+
+var clearPlotsAndResetButton = document.getElementById('clearPlotsAndResetButton');
+clearPlotsAndResetButton.addEventListener("click", function() {
+    simState.trials = 1;
+    analyzer = null;
+    reset();
+});
+
+var doAnalysisCheckbox = document.getElementById('doAnalysisCheckbox');
+doAnalysisCheckbox.addEventListener("change", function() {
+    myGlobals.doAnalysis = this.checked;
+});
+
+var resetAfterMaxStepCheckbox = document.getElementById('resetAfterMaxStepCheckbox');
+resetAfterMaxStepCheckbox.addEventListener("change", function() {
+    myGlobals.resetAfterMaxStep = this.checked;
+});
 
 document.getElementById('gridSelect').onchange = function () {
     var value = document.getElementById('gridSelect').value;

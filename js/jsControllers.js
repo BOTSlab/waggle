@@ -374,3 +374,90 @@ class OrbitalConstructionController {
         return null;
     }
 }
+
+/* Like OrbitalConstruction above, but operating on two colours (red and green)
+   with two separate thresholds.  The "walkabout" feature has also been removed.
+*/
+class OrbitalConstructionBiColourController {
+    constructor() {
+        let rand = Math.random();
+        if (rand < 0.333) {
+            this.textMessage = "GO";
+            this.innie = false;
+            this.puckType = ObjectTypes.GREEN_PUCK;
+            this.threshold = 0.5;
+        } else if (rand < 0.666) {
+            this.textMessage = "GI";
+            this.innie = true;
+            this.puckType = ObjectTypes.GREEN_PUCK;
+            this.threshold = 0.7;
+        } else {
+            this.textMessage = "RO";
+            this.innie = false;
+            this.puckType = ObjectTypes.RED_PUCK;
+            this.threshold = 0.8;
+        }
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        var action = getForwardAction();
+        action.textMessage = this.textMessage;
+
+        if (sensorReadings.leftObstacle.count > 0) {
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        }
+
+        var leftNest = sensorReadings.leftProbe.nestValue;
+        var centreNest = sensorReadings.centreProbe.nestValue;
+        var rightNest = sensorReadings.rightProbe.nestValue;
+        var leftPucks, rightPucks;
+        if (this.puckType == ObjectTypes.RED_PUCK) {
+            leftPucks = sensorReadings.leftRedPuck.count;
+            rightPucks = sensorReadings.rightRedPuck.count;
+        } else {
+            leftPucks = sensorReadings.leftGreenPuck.count;
+            rightPucks = sensorReadings.rightGreenPuck.count;
+        }
+
+        if (rightNest >= centreNest && centreNest >= leftNest) {
+            // The gradient is in the desired orientation with the highest
+            // sensed value to the right, then the centre value in the middle,
+            // followed by the lowest on the left.
+
+            // These conditions steer in (for an innie) and out (for an outie)
+            // to nudge a puck inwards or outwards.
+            if (this.innie && rightPucks > 0) {
+                action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+                action.emitPheromone = 10.0; // For debugging
+                return action;
+            } else if (!this.innie && leftPucks > 0) {
+                action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+                action.emitPheromone = 10.0; // For debugging
+                return action;
+            } 
+
+            // We now act to maintain the centre value at the desired isoline.
+            if (centreNest < this.threshold) {
+                action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+                return action;
+            } else {
+                action.angularSpeed = -0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+                return action;
+            }
+
+        } else if (centreNest >= rightNest && centreNest >= leftNest) {
+            // We are heading uphill of the gradient, turn left to return to a
+            // clockwise orbit.
+            action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        } else {
+            // We are heading downhill, turn right to return to clockwise orbit.
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        }
+
+        // SHOULDN'T REACH HERE.
+        return null;
+    }
+}

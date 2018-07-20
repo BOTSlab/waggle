@@ -67,7 +67,8 @@ class Robot {
             this.addInnerGreenSensor(x, y, myGlobals, 2*myGlobals.innerSensorRadius);
         } else if (myGlobals.configuration == "#CONSTRUCT" ||
                    myGlobals.configuration == "#ENLARGED_ROBOT") {
-            this.addConstructSensors(x, y, myGlobals);
+            this.addConstructSensors(x, y, ObjectTypes.RED_PUCK, myGlobals);
+            this.addConstructSensors(x, y, ObjectTypes.GREEN_PUCK, myGlobals);
         }
 
         // Initialize the sensor bodies
@@ -259,7 +260,7 @@ class Robot {
     }
 
     // Create the sensors used in the construct configurations. 
-    addConstructSensors(x, y, myGlobals) {
+    addConstructSensors(x, y, type, myGlobals) {
         let rr = myGlobals.robotRadius;
         let pr = myGlobals.puckRadius;
 
@@ -268,12 +269,20 @@ class Robot {
         //let width = rr * 4;
         let chamfer = 0;
         let leftBody = Bodies.rectangle(x + rr + 1*pr + depth/2, y - width/2 - 0*pr, depth, width, {isSensor: true, chamfer: chamfer});
-        this.sensors.leftRedPuck = new PuckSensor(leftBody, this, ObjectTypes.RED_PUCK);
+        if (type == ObjectTypes.RED_PUCK) {
+            this.sensors.leftRedPuck = new PuckSensor(leftBody, this, type);
+        } else if (type == ObjectTypes.GREEN_PUCK) {
+            this.sensors.leftGreenPuck = new PuckSensor(leftBody, this, type);
+        }
 
         // The right sensor will be shifted further to the right by this amount.
         let rightShift = 0;
         let rightBody = Bodies.rectangle(x + rr + 1*pr + depth/2, y + width/2 + 0*pr + rightShift, depth, width, {isSensor: true, chamfer: chamfer});
-        this.sensors.rightRedPuck = new PuckSensor(rightBody, this, ObjectTypes.RED_PUCK);
+        if (type == ObjectTypes.RED_PUCK) {
+            this.sensors.rightRedPuck = new PuckSensor(rightBody, this, type);
+        } else if (type == ObjectTypes.GREEN_PUCK) {
+            this.sensors.rightGreenPuck = new PuckSensor(rightBody, this, type);
+        }
     }
 
     updateSensorVisibility(showSensors) {

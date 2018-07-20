@@ -700,6 +700,8 @@ var options = {
 };
 
 // Inject blockly into its div.
-var workspace = Blockly.inject('blocklyDiv', options);
+if (myGlobals.usingBlockly) {
+    var workspace = Blockly.inject('blocklyDiv', options);
+}
 //var workspace = Blockly.inject('blocklyDiv',
 //    {toolbox: document.getElementById('toolbox')});
