@@ -128,8 +128,8 @@ if (configuration == "#TUTORIAL") {
     myGlobals.nRobots = 30;
     myGlobals.nRedPucks = 250;
     //myGlobals.nRedPucks = 100;
-    myGlobals.nGreenPucks = 250;
-    myGlobals.maxStep = 500;
+    myGlobals.nGreenPucks = 0;
+    //myGlobals.maxStep = 500;
 
     myGlobals.width = 500;
     myGlobals.height = 500;
@@ -434,8 +434,8 @@ function manageRobotPopulation() {
             //robot.controller = new SimpleAvoidController();
             //robot.controller = new AdvancedClusterController();
             //robot.controller = new OrbitController();
-            //robot.controller = new OrbitalConstructionController();
-            robot.controller = new OrbitalConstructionBiColourController();
+            robot.controller = new OrbitalConstructionController();
+            //robot.controller = new OrbitalConstructionBiColourController();
         }
         simState.robots.push(robot);
     }
