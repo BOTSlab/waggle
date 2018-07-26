@@ -73,8 +73,10 @@ class Analyzer {
     }
 
     analyze(timestamp, simState, forceRedraw) {
-        if (simState.step % 100 != 0)
-            return;
+        if (configuration != "#FIREFLY") {
+            if (simState.step % 100 != 0)
+                return;
+        }
 
         let value = 0;
         let config = myGlobals.configuration;
