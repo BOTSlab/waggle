@@ -326,7 +326,8 @@ function reset(seedValue) {
     }
 
     // Capture final screenshot
-    myGlobals.screenshotCaptureSteps = [myGlobals.maxStep];
+    //myGlobals.screenshotCaptureSteps = [myGlobals.maxStep];
+    myGlobals.screenshotCaptureSteps = [];
 
     simState.robots = [];
 
