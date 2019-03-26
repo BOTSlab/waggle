@@ -15,9 +15,14 @@ class Sensor {
 
     activate() {
 	    this.count += 1;
+
+	    this._body.render.strokeStyle = "red";
+	    this._body.render.fillStyle = "red";
     }
 
     deactivate() {
+    	this._body.render.strokeStyle = "blue";
+    	this._body.render.fillStyle = "blue";
     }
 
     reset() {
@@ -30,27 +35,20 @@ class Sensor {
 }
 
 
-class ObstacleSensor extends Sensor {
-	constructor(newBody, robotParent) {
+class SimpleObjectSensor extends Sensor {
+	constructor(newBody, robotParent, sensedType) {
 		super(newBody, robotParent);
-		this.mask = ObjectTypes.ROBOT | ObjectTypes.WALL;
+		this.mask = sensedType;
     }
 
     activate(sensedObject) {
-	    // Filter the case of a sensor which is not sensitive to this object type.
+        // Filter the case of a sensor which is not sensitive to this object
+        // type.
 	    if ((sensedObject.objectType & this.mask) == 0) {
 	        return;
 	    }
 
 	    super.activate();
-
-	    this.body.render.strokeStyle = "red";
-	    this.body.render.fillStyle = "red";
-	}
-
-	deactivate() {
-    	this.body.render.strokeStyle = "blue";
-    	this.body.render.fillStyle = "blue";
 	}
 }
 
@@ -62,27 +60,21 @@ class PuckSensor extends Sensor {
     }
 
     activate(sensedObject) {
-	    // Filter the case of a held puck which is invisible both to this robot as well as other robots.
+        // Filter the case of a held puck which is invisible both to this robot
+        // as well as other robots.
 	    if (sensedObject.held /*&& 
 	    	(this.robotParent.holdConstraint != null && this.robotParent.holdConstraint.bodyB != sensedObject)*/)
 	    {
 	        return;
 	    }
 
-	    // Filter the case of a sensor which is not sensitive to this object type.
+        // Filter the case of a sensor which is not sensitive to this object
+        // type.
 	    if ((sensedObject.objectType & this.mask) == 0) {
 	        return;
 	    }
 
 	    super.activate();
-
-	    this.body.render.strokeStyle = "red";
-	    this.body.render.fillStyle = "red";
-	}
-
-	deactivate() {
-    	this.body.render.strokeStyle = "blue";
-    	this.body.render.fillStyle = "blue";
 	}
 }
 
@@ -94,20 +86,13 @@ class GoalZoneSensor extends Sensor {
     }
 
     activate(sensedObject) {
-	    // Filter the case of a sensor which is not sensitive to this object type.
+        // Filter the case of a sensor which is not sensitive to this object
+        // type.
 	    if ((sensedObject.objectType & this.mask) == 0) {
 	        return;
 	    }
 
 	    super.activate();
-
-	    this.body.render.strokeStyle = "red";
-	    this.body.render.fillStyle = "red";
-	}
-
-	deactivate() {
-    	this.body.render.strokeStyle = "blue";
-    	this.body.render.fillStyle = "blue";
 	}
 }
 
@@ -127,14 +112,10 @@ class FlashSensor extends Sensor {
 	    }
 
 	    super.activate();
-
-	    this.body.render.strokeStyle = "red";
-	    this.body.render.fillStyle = "red";
 	}
 
 	reset() {
 		super.reset();
-		this.deactivate();
 	}
 
 	deactivate() {

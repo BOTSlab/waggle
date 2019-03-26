@@ -25,13 +25,12 @@ if (!configuration) {
 
 var myGlobals = {
     configuration: configuration,
-    usingBlockly: true,
     width : 100,
     height : 800,
     maxStep : 100000,
     MAX_FORWARD_SPEED: 0.015,
     MAX_ANGULAR_SPEED: 0.2,
-    wallThickness: 100,
+    wallThickness: 1000,
     visibleWallThickness: 3,
     nRobots: 1,
     nRedPucks: 0,
@@ -46,6 +45,7 @@ var myGlobals = {
     frictionAir: 1.0,
     stepsBetweenControllerUpdates: 1,
     allowMovement: true,
+    allowRotation: true,
     showSensors: false,
     doAnalysis: true,
     resetAfterMaxStep: false,
@@ -110,13 +110,14 @@ if (configuration == "#TUTORIAL") {
     document.getElementById('nRedPucksSlider').style.display = "none";
     document.getElementById('nRedPucksText').style.display = "none";
 } else if (configuration == "#CONSTRUCT") {
-    myGlobals.usingBlockly = false;
+    //myGlobals.usingBlockly = false;
 
     // Big changes from the other configurations where the robot/puck size is modified 
     // (effects physics/speeds as well).
     myGlobals.robotRadius = 5;
     myGlobals.puckRadius = 6;
     myGlobals.obstacleSensorSizeFactor = 0.15;
+//myGlobals.obstacleSensorSizeFactor = 1.0;
     myGlobals.MAX_FORWARD_SPEED = 0.015 / 20.0;
     myGlobals.MAX_ANGULAR_SPEED = 0.2 / 40.0;
 
@@ -125,14 +126,17 @@ if (configuration == "#TUTORIAL") {
     myGlobals.pheromoneDiffusionRate = 0.01;
     myGlobals.pheromoneDecayRate = 0.001;
 
-    myGlobals.nRobots = 30;
-    myGlobals.nRedPucks = 250;
+    myGlobals.nRobots = 20; // 10;
+    myGlobals.nRedPucks = 0;
+    //myGlobals.nRedPucks = 250;
     //myGlobals.nRedPucks = 100;
     myGlobals.nGreenPucks = 0;
     //myGlobals.maxStep = 500;
 
     myGlobals.width = 500;
     myGlobals.height = 500;
+    //myGlobals.width = 300;
+    //myGlobals.height = 300;
     myGlobals.showNestGrid = true;
     document.getElementById('gridSelect').value = "nest";
     //document.getElementById('nGreenPucksLabel').style.display = "none";
@@ -163,6 +167,7 @@ if (configuration == "#TUTORIAL") {
 
 // Further html customization which is independent of the configuration.
 document.getElementById('allowMovementCheckbox').checked = myGlobals.allowMovement;
+document.getElementById('allowRotationCheckbox').checked = myGlobals.allowRotation;
 document.getElementById('showSensorsCheckbox').checked = myGlobals.showSensors;
 document.getElementById('nRobotsSlider').value = myGlobals.nRobots;
 document.getElementById('nRobotsText').innerHTML = myGlobals.nRobots;
@@ -178,6 +183,8 @@ document.getElementById('resetAfterMaxStepCheckbox').checked = myGlobals.resetAf
 // The following properties depend on width and height defined above.
 myGlobals.gridWidth = myGlobals.width / 10;
 myGlobals.gridHeight = myGlobals.height / 10;
+//myGlobals.gridWidth = myGlobals.width;
+//myGlobals.gridHeight = myGlobals.height;
 
 // create a renderer
 var render = CustomRender.create({
@@ -205,7 +212,7 @@ const ObjectTypes = {
     ANY_PUCK: 0x000C
 };
 
-const ObjectColours = {
+var ObjectColours = {
     [ObjectTypes.ROBOT]: "blue", //"grey",
     [ObjectTypes.WALL]: "blue",
     [ObjectTypes.RED_PUCK]: "red",
@@ -290,14 +297,19 @@ function reset(seedValue) {
         simState.pheromoneGrid = getZeroGrid(myGlobals.gridWidth, myGlobals.gridHeight);
 
         // Create nest scent grid (but no actual Nest).
-        let nestX = 250;
-        let nestY = 250;
+        let nestX = myGlobals.width/2;//250;
+        let nestY = myGlobals.height/2;//250;
         let nestI = Math.floor(myGlobals.gridWidth * nestX /myGlobals.width);
         let nestJ = Math.floor(myGlobals.gridHeight * nestY /myGlobals.height);
         simState.nestGrid = getDistanceGrid(nestI, nestJ, myGlobals.gridWidth,
                                             myGlobals.gridHeight);
-
+        // An attempt towards testing whether using a robot's downward-facing
+        // line sensors could work for sensing the scalar field
         /*
+        simState.nestGrid = getRandomizedDistanceGrid(nestI, nestJ,
+                                            myGlobals.gridWidth,
+                                            myGlobals.gridHeight);
+
         let x1 = 100
         let y1 = 250
         let x2 = 400
@@ -307,8 +319,10 @@ function reset(seedValue) {
         let x2_grid = Math.floor(myGlobals.gridWidth * x2 /myGlobals.width);
         let y2_grid = Math.floor(myGlobals.gridHeight * y2 /myGlobals.height);
         let gridA = getDistanceToSegmentGrid(myGlobals.gridWidth, myGlobals.gridHeight, x1_grid, y1_grid, x2_grid, y2_grid);
-        //simState.nestGrid = gridA;
+        simState.nestGrid = gridA;
+        */
 
+        /*
         x1 = 250
         y1 = 100
         x2 = 250 
@@ -359,6 +373,62 @@ Events.on(engine, 'tick', function(event) {
     update();
 });
 
+Events.on(engine, 'afterUpdate', function(event) {
+    let vt = myGlobals.visibleWallThickness;
+    let rr = myGlobals.robotRadius;
+    let pr = myGlobals.puckRadius;
+    let w = myGlobals.width;
+    let h = myGlobals.height;
+
+    // Don't allow robots or pucks to escape!
+    for (let i=0; i<simState.robots.length; i++) {
+        let robot = simState.robots[i];
+        if (robot.body.position.x < rr + vt) {
+            Body.setPosition(robot.body, {
+                            x: rr + vt,
+                            y: robot.body.position.y});
+        }
+        if (robot.body.position.x > w - rr - vt) {
+            Body.setPosition(robot.body, {
+                            x: w - rr - vt,
+                            y: robot.body.position.y});
+        }
+        if (robot.body.position.y < rr + vt) {
+            Body.setPosition(robot.body, {
+                            x: robot.body.position.x,
+                            y: rr + vt});
+        }
+        if (robot.body.position.y > h - rr - vt) {
+            Body.setPosition(robot.body, {
+                            x: robot.body.position.x,
+                            y: h - rr - vt});
+        }
+    }
+    for (let i=0; i<simState.pucks.length; i++) {
+        let puck = simState.pucks[i];
+        if (puck.position.x < pr + vt) {
+            Body.setPosition(puck, {
+                            x: pr + vt,
+                            y: robot.body.position.y});
+        }
+        if (puck.position.x > w - pr - vt) {
+            Body.setPosition(puck, {
+                            x: w - pr - vt,
+                            y: robot.body.position.y});
+        }
+        if (puck.position.y < pr + vt) {
+            Body.setPosition(puck, {
+                            x: puck.position.x,
+                            y: rr + vt});
+        }
+        if (puck.position.y > h - pr - vt) {
+            Body.setPosition(puck, {
+                            x: puck.position.x,
+                            y: h - pr - vt});
+        }
+    }
+});
+
 function update() {
     manageRobotPopulation();
 
@@ -389,9 +459,7 @@ function update() {
     if (myGlobals.screenshotCaptureSteps.find(function(element) {
         return element == simState.step;
     })) {
-    /*
-    }) || (simState.step <= myGlobals.maxStep && simState.step % 10 == 0)) {
-    */
+    //}) || (simState.step <= myGlobals.maxStep && simState.step % 10 == 0)) {
         var step = simState.step 
         render.canvas.toBlob(function(blob) {
             //saveAs(blob, (step/10 + ".png").padStart(11, "0")); 
@@ -427,16 +495,27 @@ function manageRobotPopulation() {
 
         // Create one robot per time step.
         var robot = new Robot(engine.world, myGlobals);
+        robot.controller = new Controller();
+        /*        
         if (myGlobals.usingBlockly) {
             robot.controller = new BlocklyController();        
         } else { 
             //robot.controller = new TestController();
             //robot.controller = new SimpleAvoidController();
             //robot.controller = new AdvancedClusterController();
-            //robot.controller = new OrbitController();
-            robot.controller = new OrbitalConstructionController();
+            if (myGlobals.controllerString == "JSController") {
+                robot.controller = new JSController();
+            } else if (myGlobals.controllerString == "OrbitController") {
+                robot.controller = new OrbitController();
+            } else if (myGlobals.controllerString == "OrbitalConstructionController") {
+                robot.controller = new OrbitalConstructionController();
+            } else if (myGlobals.controllerString == "OrbitalConstructionController3") {
+                robot.controller = new OrbitalConstructionController3();
+            }
+            //robot.controller = new OrbitalConstructionController2();
             //robot.controller = new OrbitalConstructionBiColourController();
         }
+        */
         simState.robots.push(robot);
     }
     if (simState.robots.length > myGlobals.nRobots) {
@@ -506,13 +585,17 @@ function updateRobot(robot) {
     }
 
     robot.text = action.textMessage;
+    robot.textColour = action.textColour;
 
     if (!myGlobals.allowMovement) {
         action.linearSpeed = 0;
+    }
+    if (!myGlobals.allowRotation) {
         action.angularSpeed = 0;
     }
 
     // Keyboard interaction: left/right turn robot, up/down move linearly.
+    /*
     if (keys[37]) {
         action.angularSpeed -= myGlobals.MAX_ANGULAR_SPEED;
     } else if (keys[39]) {
@@ -522,6 +605,7 @@ function updateRobot(robot) {
     } else if (keys[40]) {
         action.linearSpeed -= myGlobals.MAX_FORWARD_SPEED;
     } 
+    */
 
     // Apply the motion command.
     var force = { x: action.linearSpeed, y: 0 };
@@ -530,11 +614,6 @@ function updateRobot(robot) {
     robot.body.torque = action.angularSpeed;
 
     // Reset the count for all sensor readings.
-    /*
-    for (key in robot.sensorReadings) {
-        robot.sensorReadings[key].count = 0;
-    }
-    */
     robot.clearSensors();
 }
 
@@ -729,55 +808,87 @@ Runner.run(runner, engine);
 // Blockly related
 //
 
-if (myGlobals.usingBlockly) {
+var blocklyClearButton = document.getElementById('blocklyClearButton');
+blocklyClearButton.addEventListener("click", function() {
+    Blockly.mainWorkspace.clear();
+});
 
-    var clearButton = document.getElementById('clearButton');
-    clearButton.addEventListener("click", function() {
-        Blockly.mainWorkspace.clear();
-    });
+var blocklySaveButton = document.getElementById('blocklySaveButton');
+blocklySaveButton.addEventListener("click", function() {
+    // Get the xml for the current workspace.
+    var xml = Blockly.Xml.workspaceToDom(workspace);
+    var xml_text = Blockly.Xml.domToText(xml);
 
-    var saveButton = document.getElementById('saveButton');
-    saveButton.addEventListener("click", function() {
-        // Get the xml for the current workspace.
-        var xml = Blockly.Xml.workspaceToDom(workspace);
-        var xml_text = Blockly.Xml.domToText(xml);
+    var filename = document.getElementById('blocklySaveFileName').value;
+    var blob = new Blob([xml_text], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, filename);
+});
 
-        var filename = document.getElementById('saveFileName').value;
-        var blob = new Blob([xml_text], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, filename);
-    });
-
-    function loadFile(o) {
-        var fr = new FileReader();
-        fr.onload = function(e) {
-            var xml_text = e.target.result;
-            var xml = Blockly.Xml.textToDom(xml_text);
-            Blockly.Xml.domToWorkspace(xml, workspace);
-        };
-        fr.readAsText(o.files[0]);
-    }
-
-    var fileLoader = document.getElementById('fileLoader');
-    fileLoader.addEventListener("change", function() {
-        loadFile(this);
-    });
-
-    var showJSButton = document.getElementById('showJSButton');
-    showJSButton.addEventListener("click", function() {
-        Blockly.JavaScript.addReservedWords('code');
-        var code = Blockly.JavaScript.workspaceToCode();
-        alert(code);
-        console.log(code);
-    });
-
-    var showXMLButton = document.getElementById('showXMLButton');
-    showXMLButton.addEventListener("click", function() {
-        var xml = Blockly.Xml.workspaceToDom(workspace);
-        var xml_text = Blockly.Xml.domToText(xml);
-        alert(xml_text);
-    });
-
+function blocklyLoadFile(o) {
+    var fr = new FileReader();
+    fr.onload = function(e) {
+        var xml_text = e.target.result;
+        var xml = Blockly.Xml.textToDom(xml_text);
+        Blockly.Xml.domToWorkspace(xml, workspace);
+    };
+    fr.readAsText(o.files[0]);
 }
+
+var blocklyFileLoader = document.getElementById('blocklyFileLoader');
+blocklyFileLoader.addEventListener("change", function() {
+    blocklyLoadFile(this);
+});
+
+var blocklyTransferButton = document.getElementById('blocklyTransferButton');
+blocklyTransferButton.addEventListener("click", function() {
+    Blockly.JavaScript.addReservedWords('code');
+    var code = Blockly.JavaScript.workspaceToCode();
+    myCodeMirror.setValue(code);
+    myCodeMirror.refresh();
+});
+
+/*
+var blocklyShowXMLButton = document.getElementById('blocklyShowXMLButton');
+blocklyShowXMLButton.addEventListener("click", function() {
+    var xml = Blockly.Xml.workspaceToDom(workspace);
+    var xml_text = Blockly.Xml.domToText(xml);
+    alert(xml_text);
+});
+*/
+
+//
+// Related to the JS editor
+//
+
+var jsClearButton = document.getElementById('jsClearButton');
+jsClearButton.addEventListener("click", function() {
+    myCodeMirror.setValue("");
+    myCodeMirror.refresh();
+});
+
+var jsSaveButton = document.getElementById('jsSaveButton');
+jsSaveButton.addEventListener("click", function() {
+    var code = myCodeMirror.getValue();            
+
+    var filename = document.getElementById('jsSaveFileName').value;
+    var blob = new Blob([code], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, filename);
+});
+
+function jsLoadFile(o) {
+    var fr = new FileReader();
+    fr.onload = function(e) {
+        var code = e.target.result;
+        myCodeMirror.setValue(code);
+        myCodeMirror.refresh();
+    };
+    fr.readAsText(o.files[0]);
+}
+
+var jsFileLoader = document.getElementById('jsFileLoader');
+jsFileLoader.addEventListener("change", function() {
+    jsLoadFile(this);
+});
 
 //
 // Matter related
@@ -799,6 +910,11 @@ allowMovementCheckbox.addEventListener("change", function() {
     //console.log("ALLOW MOVEMENT - " + this.checked);
 });
 
+var allowRotationCheckbox = document.getElementById('allowRotationCheckbox');
+allowRotationCheckbox.addEventListener("change", function() {
+    myGlobals.allowRotation = this.checked;
+});
+
 var showSensorsCheckbox = document.getElementById('showSensorsCheckbox');
 showSensorsCheckbox.addEventListener("change", function() {
     myGlobals.showSensors = this.checked;
@@ -807,6 +923,16 @@ showSensorsCheckbox.addEventListener("change", function() {
         let robot = simState.robots[i];
         robot.updateSensorVisibility(myGlobals.showSensors);
     }
+});
+
+var greenToBlueCheckbox = document.getElementById('greenToBlueCheckbox');
+greenToBlueCheckbox.addEventListener("change", function() {
+    if (this.checked) {
+        ObjectColours[ObjectTypes.GREEN_PUCK] = "blue";
+    } else {
+        ObjectColours[ObjectTypes.GREEN_PUCK] = "green";
+    }
+    reset('Seed');
 });
 
 document.getElementById('timeScaleSlider').oninput = function () {

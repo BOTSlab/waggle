@@ -11,12 +11,10 @@
 
           gtag('config', 'UA-111922440-2');
         </script>
-      -->
+        -->
 
-        <title>Waggle (JS Only)</title>
+        <title>Waggle 1.1</title>
 
-        <!--        <link rel="stylesheet" href="css/normalize.css"> -->
-        <!--        <link rel="stylesheet" href="css/main.css"> -->
         <link rel="stylesheet" href="css/custom.css">
 
         <!-- For Blockly -->
@@ -25,213 +23,18 @@
         <script src="js/vendor/blocks_compressed.js"></script>
         <script src="js/vendor/en.js"></script>
         <script src="js/vendor/javascript_compressed.js"></script>
-      -->
+        -->
 
         <!-- For JS Interpretr -->
         <!-- <script src="js/vendor/acorn_interpreter.js"></script> -->
-
-        <!--
-        <xml id="toolbox" style="display: none">
-            <category name="Control">
-                <block type="controls_if"></block>
-                <block type="controls_whileUntil"></block>
-                <block type="controls_for">
-            </category>
-            <category name="Logic">
-                <block type="logic_compare"></block>
-                <block type="logic_operation"></block>
-                <block type="logic_boolean"></block>
-            </category>
-        </xml>
-        -->
 
         <!-- Stupidly just pasting this in, because inputting from an XML file
              seems to be surprisingly complex. -->
         <!-- <embed src="blockly_xml/toolbox.xml" type="xml"> -->
         <!-- <script src="blockly_xml/toolbox.xml" type="text/xml"></script> -->
-        <!--
-<xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">
-  <category name="Sensors" colour="#a55b5b">
-    <block type="robot_left_nest_value"></block>
-    <block type="robot_left_obstacle"></block>
-    <block type="robot_within_goal_zone"></block>
-    <block type="robot_inner_puck_count">
-      <field name="puckColour">red</field>
-    </block>
-    <block type="robot_puck_held">
-      <field name="puckColour">red</field>
-    </block>
-    <block type="robot_left_puck_count">
-      <field name="puckColour">red</field>
-    </block>
-    <block type="robot_right_puck_count">
-      <field name="puckColour">red</field>
-    </block>
-    <block type="robot_flash_count"></block>
-    <block type="robot_right_obstacle"></block>
-    <block type="robot_centre_nest_value"></block>
-    <block type="robot_right_nest_value"></block>
-    <block type="robot_left_pheromone_value"></block>
-    <block type="robot_centre_pheromone_value"></block>
-    <block type="robot_right_pheromone_value"></block>
-  </category>
-  <category name="Actions" colour="#5ba55b">
-    <block type="robot_activate_flash"></block>
-    <block type="robot_set_speed">
-      <field name="linearSpeed">0</field>
-      <field name="angularSpeed">0</field>
-    </block>
-    <block type="robot_hold_speed">
-      <field name="holdTime">0</field>
-    </block>
-    <block type="robot_hold_speed_slot"></block>
-    <block type="robot_activate_gripper"></block>
-    <block type="robot_deactivate_gripper"></block>
-    <block type="robot_set_speed_slots"></block>
-    <block type="robot_deactivate_flash"></block>
-    <block type="robot_emit_pheromone">
-      <field name="quantity">10</field>
-    </block>
-    <block type="robot_emit_pheromone_slot"></block>
-    <block type="robot_set_text">
-      <field name="text">Hi!</field>
-    </block>
-    <block type="robot_set_text_variable">
-      <field name="variableName">variableA</field>
-    </block>
-    <block type="robot_execute"></block>
-  </category>
-  <category name="Memory" colour="#a55ba5">
-    <block type="robot_set_variable">
-      <field name="variableName">variableA</field>
-      <field name="newValue">0</field>
-    </block>
-    <block type="robot_set_variable_slot">
-      <field name="variableName">variableA</field>
-    </block>
-    <block type="robot_change_variable">
-      <field name="variableName">variableA</field>
-      <field name="deltaValue">0</field>
-    </block>
-    <block type="robot_change_variable_slot">
-      <field name="variableName">variableA</field>
-    </block>
-    <block type="robot_get_variable">
-      <field name="variableName">variableA</field>
-    </block>
-    <block type="robot_set_text_variable">
-      <field name="variableName">variableA</field>
-    </block>
-  </category>
-  <sep></sep>
-  <category name="Logic" colour="#5C81A6">
-    <block type="controls_if"></block>
-    <block type="logic_compare">
-      <field name="OP">EQ</field>
-    </block>
-    <block type="logic_operation">
-      <field name="OP">AND</field>
-    </block>
-    <block type="logic_negate"></block>
-    <block type="logic_boolean">
-      <field name="BOOL">TRUE</field>
-    </block>
-    <block type="logic_ternary"></block>
-  </category>
-  <category name="Math" colour="#5C68A6">
-    <block type="math_number">
-      <field name="NUM">0</field>
-    </block>
-    <block type="math_single">
-      <field name="OP">ROOT</field>
-      <value name="NUM">
-        <shadow type="math_number">
-          <field name="NUM">9</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_trig">
-      <field name="OP">SIN</field>
-      <value name="NUM">
-        <shadow type="math_number">
-          <field name="NUM">45</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_constant">
-      <field name="CONSTANT">PI</field>
-    </block>
-    <block type="math_number_property">
-      <mutation divisor_input="false"></mutation>
-      <field name="PROPERTY">EVEN</field>
-      <value name="NUMBER_TO_CHECK">
-        <shadow type="math_number">
-          <field name="NUM">0</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_arithmetic">
-      <field name="OP">ADD</field>
-      <value name="A">
-        <shadow type="math_number">
-          <field name="NUM">1</field>
-        </shadow>
-      </value>
-      <value name="B">
-        <shadow type="math_number">
-          <field name="NUM">1</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_modulo">
-      <value name="DIVIDEND">
-        <shadow type="math_number">
-          <field name="NUM">64</field>
-        </shadow>
-      </value>
-      <value name="DIVISOR">
-        <shadow type="math_number">
-          <field name="NUM">10</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_constrain">
-      <value name="VALUE">
-        <shadow type="math_number">
-          <field name="NUM">50</field>
-        </shadow>
-      </value>
-      <value name="LOW">
-        <shadow type="math_number">
-          <field name="NUM">1</field>
-        </shadow>
-      </value>
-      <value name="HIGH">
-        <shadow type="math_number">
-          <field name="NUM">100</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_random_int">
-      <value name="FROM">
-        <shadow type="math_number">
-          <field name="NUM">1</field>
-        </shadow>
-      </value>
-      <value name="TO">
-        <shadow type="math_number">
-          <field name="NUM">100</field>
-        </shadow>
-      </value>
-    </block>
-    <block type="math_random_float"></block>
-  </category>
-</xml>
+<!--
+DELETED
 -->
-
-
-        <!-- Required by matter -->
-        <!-- <script src="js/vendor/decomp.js"></script> -->
 
         <!-- For matter -->
         <script src="js/vendor/matter.js"></script>
@@ -243,7 +46,6 @@
         <!-- For plotting. -->
         <script src="js/vendor/highcharts.js"></script>
         <script src="https://code.highcharts.com/modules/exporting.js"></script>
-<!--        <script src="http://code.highcharts.com/modules/offline-exporting.js"></script>-->
 
         <!-- For saving the blocks to a local file. -->
         <script src="js/vendor/FileSaver.min.js"></script>
@@ -254,7 +56,7 @@
     </head>
 
     <body>
-        <h2>Waggle (JS Only): Online Platform for Swarm Robotics</h2>
+        <h2>Waggle 1.1: Online Laboratory for Swarm Robotics</h2>
 
         <div class="grid">
             <div class="row">
@@ -262,22 +64,21 @@
                 <div class="gap-col"></div>
 
                 <div class="matter-col">
-                    <!--<canvas id="matterCanvas" width=500 height=800></canvas>-->
                     <div id="matterDiv"></div>
+                </div>
+
+                <div class="controls-coll">
 
                     <div id="controlsDiv">
                         <table cellpadding="2" style="width: 100%">
                             <tr>
                             <td><button type="button" id="resetButton">Reset</button></td>
                             <td><button type="button" id="reseedAndResetButton">Reseed and Reset</button></td>
-                            <td><input type="checkbox" id="allowMovementCheckbox">Allow Movement</input></td>
+                            <td><input type="checkbox" id="allowMovementCheckbox">Movement?</input></td>
+                            <td><input type="checkbox" id="allowRotationCheckbox">Rotation?</input></td>
                             
-                            <td><input type="checkbox" id="showSensorsCheckbox">Show Sensors</input></td>
+                            <td><input type="checkbox" id="showSensorsCheckbox">Show Sensors?</input></td>
 
-                            <td>
-                              <input type="checkbox" id="doAnalysisCheckbox"></input>
-                              <td id='doAnalysisText'>Analysis</td></tr> 
-                            </td>
                             </tr>
 
                             <tr><td>Timescale </td>
@@ -285,7 +86,7 @@
                                 <td id='timeScaleText'>1</td></tr> 
 
                             <tr><td>Desired Population </td>
-                                <td><input id='nRobotsSlider' type='range' min='0' value='30' max='100' step='1'/></td>
+                                <td><input id='nRobotsSlider' type='range' min='0' value='1' max='100' step='1'/></td>
                                 <td id='nRobotsText'></td>
 
                                 <td >Actual Population</td>
@@ -302,6 +103,11 @@
                                 <td id='nGreenPucksText'></td></tr> 
 
                             <tr>
+                                <td id='maxStepLabel'>Max. Step</td>
+                                <td><input id='maxStepSlider' type='range' min='0' value='0' max='100000' step='1000'/></td>
+                                <td id='maxStepText'></td></tr> 
+
+                            <tr>
                                 <div id="gridDiv">
                                     Select grid visibility:
                                     <select id="gridSelect">
@@ -310,8 +116,31 @@
                                         <option value="nest">Show Nest Grid</option>
                                     </select>
                                 </div>
+
+                                <!--
+                                <div id="jsCtrlDiv">
+                                    Select JS Controller:
+                                    <select id="jsCtrlSelect">
+                                        <option value="OrbitController">Orbit</option>
+                                        <option value="OrbitalConstructionController">Orbital Construction Controller</option>
+                                    </select>
+                                </div>
+                                -->
+                    
                             </tr>
 
+                        </table>
+                    </div>
+
+                    <div id="analysisControlsDiv">
+                        <table cellpadding="2" style="width: 100%">
+                            <tr>
+                            <td><button type="button" id="clearPlotsAndResetButton">Clear Plots and Reset</button></td>
+                            <td><input type="checkbox" id="doAnalysisCheckbox"></input></td>
+                            <td id='doAnalysisText'>Plot?</td>
+
+                            <td><input type="checkbox" id="resetAfterMaxStepCheckbox">Reset After Max. Step?</input></td>
+                            </tr>
                         </table>
                     </div>
 
@@ -321,41 +150,16 @@
 
                 </div>
 
-                <!--
-
+<!--
                 <div class="gap-col"></div>
 
                 <div class="blockly-col">
+-->
 
-                    <div class="blocklyDiv" id="blocklyDiv">
-
-                    <div id="blocklyControlsDiv">
-                        <table cellpadding="2">
-                            <tr>
-                            <td><button type="button" id="clearButton">Clear</button></td>
-
-                            <td><div class="file-box">
-                                <label>Load</label>
-                                <input type="file" id="fileLoader" value="pheromone_test.xml"></input></div></td>
-
-                            <td><div class="file-box">
-                                <button type="button" id="saveButton">Save As</button>
-                                <input type="text" id="saveFileName" value="blocks.xml"></input></div></td>
-
-                            <td><button type="button" id="showJSButton">Show Javascript</button></td>
-
-                            <td><button type="button" id="showXMLButton">Show XML</button></td>
-
-                            </tr>
-                        </table>
-
-                        <div id='statusMessage'></div>
-
-                    </div>
-
-                  -->
-
-                </div>
+                <div id="blocklyControlsDiv"></div>
+<!--
+BLOCKLY STUFF DELETED, EXCEPT CONTROLS DIV ABOVE
+-->
 
             </div>
         </div>
@@ -364,19 +168,19 @@
         <script src="js/populate.js"></script>
         <script src="js/sensors.js"></script>
         <script src="js/robot.js"></script>
-        <!--
-        <script src="js/blocklyConfig.js"></script>
-      -->
         <script src="js/jsControllers.js"></script>
-        <!--
+<!--
         <script src="js/blocklyController.js"></script>
-      -->
+-->
         <script src="js/analysis.js"></script>
         <script src="js/CustomRender.js"></script>
         <script src="js/valueGrids.js"></script>
         <script src="js/distToSegment.js"></script>
         <script src="js/nest.js"></script>
         <script src="js/main.js"></script>
+<!--
+        <script src="js/blocklyConfig.js"></script>
+-->
 
     </body>
 </html>

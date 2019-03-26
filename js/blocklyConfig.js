@@ -430,22 +430,22 @@ Blockly.Blocks['robot_within_goal_zone'] = {
 
 
 Blockly.JavaScript['robot_left_obstacle'] = function(block) {
-  var code = 'sensorReadings.leftObstacle.count > 0';
+  var code = 'sensorReadings.leftWall.count > 0 || sensorReadings.leftRobot.count > 0';
   return [code, Blockly.JavaScript.ORDER_NONE];
 };
 
 Blockly.JavaScript['robot_right_obstacle'] = function(block) {
-  var code = 'sensorReadings.rightObstacle.count > 0';
+  var code = 'sensorReadings.rightWall.count > 0 || sensorReadings.rightRobot.count > 0';
   return [code, Blockly.JavaScript.ORDER_NONE];
 };
 
 Blockly.JavaScript['robot_left_obstacle_count'] = function(block) {
-  var code = 'sensorReadings.leftObstacle.count';
+  var code = 'sensorReadings.leftWall.count + sensorReadings.leftRobot.count';
   return [code, Blockly.JavaScript.ORDER_NONE];
 };
 
 Blockly.JavaScript['robot_right_obstacle_count'] = function(block) {
-  var code = 'sensorReadings.rightObstacle.count';
+  var code = 'sensorReadings.rightWall.count + sensorReadings.rightRobot.count';
   return [code, Blockly.JavaScript.ORDER_NONE];
 };
 
@@ -700,8 +700,28 @@ var options = {
 };
 
 // Inject blockly into its div.
-if (myGlobals.usingBlockly) {
-    var workspace = Blockly.inject('blocklyDiv', options);
-}
-//var workspace = Blockly.inject('blocklyDiv',
-//    {toolbox: document.getElementById('toolbox')});
+// From: https://developers.google.com/blockly/guides/configure/web/resizable
+var blocklyArea = document.getElementById('blocklyArea');
+var blocklyDiv = document.getElementById('blocklyDiv');
+var workspace = Blockly.inject(blocklyDiv,
+    {toolbox: document.getElementById('toolbox')});
+var onresize = function(e) {
+  // Compute the absolute coordinates and dimensions of blocklyArea.
+  var element = blocklyArea;
+  var x = 0;
+  var y = 0;
+  do {
+    x += element.offsetLeft;
+    y += element.offsetTop;
+    element = element.offsetParent;
+  } while (element);
+  // Position blocklyDiv over blocklyArea.
+  blocklyDiv.style.left = x + 'px';
+  blocklyDiv.style.top = y + 'px';
+  blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+  blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+  Blockly.svgResize(workspace);
+};
+window.addEventListener('resize', onresize, false);
+onresize();
+Blockly.svgResize(workspace);

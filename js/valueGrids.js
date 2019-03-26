@@ -65,6 +65,33 @@ function getDistanceGrid(cx, cy, width, height) {
     return grid;
 }
 
+/* The grid returned will be binary with the probability of 0 (black) or 1
+(white) dependent on the distance to the source point at (cx, cy). */
+function getRandomizedDistanceGrid(cx, cy, width, height) {
+    let grid = getZeroGrid(width, height);
+
+    let maxDistance = Math.sqrt( Math.pow( Math.max(cx, width - cx - 1), 2)
+                               + Math.pow( Math.max(cy, width - cy - 1), 2));
+
+    for (let i=0; i<width; i++) {
+        for (let j=0; j<height; j++) {
+            let dx = i - cx;
+            let dy = j - cy;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+
+            let probability = distance / maxDistance;
+            if (Math.random() > probability) {
+                grid[i][j] = 1;
+            } else {
+                grid[i][j] = 0;
+            }
+        }
+    }
+
+    return grid;
+}
+
+
 // Get the distances to the line segment specified by points (x1, y1) and (x2,
 // y2).  Uses functions defined in distToSegment.js.
 function getDistanceToSegmentGrid(width, height, x1, y1, x2, y2) {

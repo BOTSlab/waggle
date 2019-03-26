@@ -421,7 +421,21 @@ var Mouse = Matter.Mouse;
 
         if (robots) {
             for (let i=0; i<robots.length; i++) {
+
                 robots[i].drawExtraInfo(context);
+
+                // Optionally, draw an extra long heading indicator.
+                /*
+                context.beginPath();
+                let robot = robots[i];
+                let hx = robot.x + 20*Math.cos(robot.body.angle); 
+                let hy = robot.y + 20*Math.sin(robot.body.angle); 
+                context.moveTo(robot.x, robot.y);
+                context.lineTo(hx, hy);
+                context.strokeStyle = "white";
+                context.stroke();
+                context.closePath();
+                */
             }
         }
 
@@ -1236,6 +1250,33 @@ var Mouse = Matter.Mouse;
         var c = context,
             options = render.options;
 
+        /** APPROACH 1: Creates an image from the grid and then renders it.
+            Definitely nicer and faster but had trouble getting the image to
+            scale appropriately.
+        var width = grid.length;
+        var height = grid[0].length;
+        var imageData = c.createImageData(width, height);
+
+        for (var j=0; j<height; j++) {
+            for (var i=0; i<width; i++) {
+                var value = grid[i][j];
+                imageData.data[((width * j) + i) * 4    ] = 255*value;
+                imageData.data[((width * j) + i) * 4 + 1] = 255*value;
+                imageData.data[((width * j) + i) * 4 + 2] = 255*value;
+                imageData.data[((width * j) + i) * 4 + 3] = 255;
+            }
+        }
+
+        var xOffset = 0;
+        var yOffset = 0;
+        var xScale = 1.0;
+        var yScale = 1.0;
+        c.putImageData(imageData, 0, 0, 0, 0, 2*width, 2*height);
+        */
+
+        /** APPROACH 2: Renders the grid with individual rectangles for each
+            cell.  Slower than APPROACH 1 but Waggle 1.0 solutions were
+            developed with this approach. */
         var gridWidth = grid.length;
         var gridHeight = grid[0].length;
         var cellWidth = c.canvas.width / gridWidth;
@@ -1244,10 +1285,15 @@ var Mouse = Matter.Mouse;
             for (var i=0; i<gridWidth; i++) {
                 var value = grid[i][j];
                 var scaledIntValue = Math.floor(value * 255);
+// TO INDICATE THE DESIRED CONTOUR.
+// if (Math.abs(value-0.75) < 0.003) {
+//     scaledIntValue = 0;
+// }
                 c.fillStyle = "rgb(" + scaledIntValue + ", " + scaledIntValue + ", " + scaledIntValue + ")";
                 c.fillRect(i*cellWidth, j*cellHeight, cellWidth, cellHeight);
             }
         }
+        /**/
     };
 
     /**

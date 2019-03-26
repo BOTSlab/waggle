@@ -3,6 +3,12 @@
  * sensors.
  */
 
+/*
+let gridCellWidth = 50;
+let lastGridX = gridCellWidth;
+let lastGridY = gridCellWidth;
+*/
+
 class Robot {
     // Creates the robot and adds it to the given world.
     constructor(world, myGlobals) {
@@ -16,6 +22,15 @@ class Robot {
         // Choose a random position within the walls.
         let x = Math.floor(t + robotRadius + (w - 2 * t - 2 * robotRadius) * Math.random());
         let y = Math.floor(t + robotRadius + (h - 2 * t - 2 * robotRadius) * Math.random());
+        /*
+        let x = lastGridX;
+        let y = lastGridY;
+        lastGridX = lastGridX + gridCellWidth;
+        if (lastGridX >= w) {
+            lastGridX = gridCellWidth;
+            lastGridY = lastGridY + gridCellWidth;
+        }
+        */
 
         // Create the main body of the robot
         this.mainBody = Bodies.circle(x, y, robotRadius);
@@ -31,7 +46,6 @@ class Robot {
         angleBody.render.strokeStyle = "white";
         angleBody.render.fillStyle = "white";
         angleBody.objectType = ObjectTypes.ROBOT;
-        angleBody.frictionAir = myGlobals.frictionAir;
         angleBody.label = "Robot Angle Indicator";
         angleBody.mass = 0;
         angleBody.inverseMass = Infinity;
@@ -42,8 +56,10 @@ class Robot {
 
         this.sensors = {};
 
-        // All configurations have left/right obstacle sensors.
-        this.addObstacleSensors(x, y, myGlobals);
+        // All configurations have left/right obstacle sensors and left/right
+        // robot sensors.
+        this.addSimpleObjectSensors(x, y, myGlobals, "Wall", ObjectTypes.WALL);
+        this.addSimpleObjectSensors(x, y, myGlobals, "Robot",ObjectTypes.ROBOT);
 
         let pr = myGlobals.puckRadius;
 
@@ -116,6 +132,7 @@ class Robot {
         this.body.robotParent = this;
         this.holdConstraint = null;
         this.text = "";
+        this.textColour = "cyan";
 
         // Grid probes are represented only as relative (distance, angle) pairs
         // which which give the points at which the robot can sample the grid.
@@ -127,17 +144,11 @@ class Robot {
             let distance = 2*myGlobals.robotRadius;
 
             this.gridProbes.leftProbe = { distance: distance, angle: -angle };
-            this.gridProbes.centreProbe = { distance: distance, angle: 0 };
+            //this.gridProbes.centreProbe = { distance: distance/Math.sqrt(2),
+            this.gridProbes.centreProbe = { distance: distance,
+                                            angle: 0 };
             this.gridProbes.rightProbe = { distance: distance, angle: angle };
-        } /* else if (myGlobals.configuration == "#CONSTRUCT") {
-            let angle = Math.PI/4.0;
-            let distance = 2*myGlobals.robotRadius;
-
-            this.gridProbes.leftProbe = { distance: distance, angle: Math.PI/2 - angle };
-            this.gridProbes.centreProbe = { distance: distance, angle: Math.PI/2 };
-            this.gridProbes.rightProbe = { distance: distance, angle: Math.PI/2 + angle };
-        } */
-
+        }
         this.updateSensorVisibility(myGlobals.showSensors);
 
         World.add(world, [this.body]);
@@ -196,7 +207,7 @@ class Robot {
         return sensorReadings;
     }
 
-    addObstacleSensors(x, y, myGlobals) {
+    addSimpleObjectSensors(x, y, myGlobals, sensorName, sensedType) {
         let rr = myGlobals.robotRadius;
         let r = myGlobals.obstacleSensorSizeFactor * rr;
 
@@ -205,13 +216,17 @@ class Robot {
         let dx = (rr + r) * Math.cos(angle);
         let dy = (rr + r) * Math.sin(angle);
         let leftBody = Bodies.circle(x + dx, y + dy, r, {isSensor: true});
-        this.sensors.leftObstacle = new ObstacleSensor(leftBody, this);
+        let leftSensorName = "left" + sensorName;
+        this.sensors[leftSensorName] = new SimpleObjectSensor(leftBody, this,
+                                                              sensedType);
 
         // Right sensor
         dx = (rr + r) * Math.cos(-angle);
         dy = (rr + r) * Math.sin(-angle);
         let rightBody = Bodies.circle(x + dx, y + dy, r, {isSensor: true});
-        this.sensors.rightObstacle = new ObstacleSensor(rightBody, this);
+        let rightSensorName = "right" + sensorName;
+        this.sensors[rightSensorName] = new SimpleObjectSensor(rightBody, this, 
+                                                               sensedType);
     }
 
     addGoalZoneSensor(x, y, myGlobals) {
@@ -295,9 +310,8 @@ class Robot {
     // Called by the renderer to draw additional components on top of the
     // robot.
     drawExtraInfo(context) {
-
-        context.fillStyle = "cyan";
-        context.fillText(this.text, this.x, this.y);
+        context.fillStyle = this.textColour;
+        context.fillText(this.text, this.x, this.y-6);
 
         if (!this.showExtraInfo) {
             return;
@@ -314,5 +328,6 @@ class Robot {
         }
         context.strokeStyle = "purple";
         context.stroke();
+        context.closePath();
     }
 }

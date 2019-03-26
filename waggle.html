@@ -11,10 +11,8 @@
           gtag('config', 'UA-111922440-2');
         </script>
 
-        <title>Waggle 1.1</title>
+        <title>Waggle 1.2</title>
 
-        <!--        <link rel="stylesheet" href="css/normalize.css"> -->
-        <!--        <link rel="stylesheet" href="css/main.css"> -->
         <link rel="stylesheet" href="css/custom.css">
 
         <!-- For Blockly -->
@@ -26,21 +24,11 @@
         <!-- For JS Interpretr -->
         <!-- <script src="js/vendor/acorn_interpreter.js"></script> -->
 
-        <!--
-        <xml id="toolbox" style="display: none">
-            <category name="Control">
-                <block type="controls_if"></block>
-                <block type="controls_whileUntil"></block>
-                <block type="controls_for">
-            </category>
-            <category name="Logic">
-                <block type="logic_compare"></block>
-                <block type="logic_operation"></block>
-                <block type="logic_boolean"></block>
-            </category>
-        </xml>
-        -->
-
+       <!-- For the CodeMirror JS Editor -->
+        <script src="js/vendor/codemirror.js"></script>
+        <link rel="stylesheet" href="css/codemirror.css">
+        <script src="js/vendor/javascript.js"></script>
+ 
         <!-- Stupidly just pasting this in, because inputting from an XML file
              seems to be surprisingly complex. -->
         <!-- <embed src="blockly_xml/toolbox.xml" type="xml"> -->
@@ -235,9 +223,6 @@
 
 
 
-        <!-- Required by matter -->
-        <!-- <script src="js/vendor/decomp.js"></script> -->
-
         <!-- For matter -->
         <script src="js/vendor/matter.js"></script>
 
@@ -258,7 +243,7 @@
     </head>
 
     <body>
-        <h2>Waggle 1.1: Visual Programming for Swarm Robotics</h2>
+        <h2>Waggle 1.2: The Online Swarm Robotics Lab</h2>
 
         <div class="grid">
             <div class="row">
@@ -266,7 +251,6 @@
                 <div class="gap-col"></div>
 
                 <div class="matter-col">
-                    <!--<canvas id="matterCanvas" width=500 height=800></canvas>-->
                     <div id="matterDiv"></div>
 
                     <div id="controlsDiv">
@@ -274,10 +258,12 @@
                             <tr>
                             <td><button type="button" id="resetButton">Reset</button></td>
                             <td><button type="button" id="reseedAndResetButton">Reseed and Reset</button></td>
-                            <td><input type="checkbox" id="allowMovementCheckbox">Allow Movement?</input></td>
+                            <td><input type="checkbox" id="allowMovementCheckbox">Movement?</input></td>
+                            <td><input type="checkbox" id="allowRotationCheckbox">Rotation?</input></td>
                             
                             <td><input type="checkbox" id="showSensorsCheckbox">Show Sensors?</input></td>
 
+                            <td><input type="checkbox" id="greenToBlueCheckbox">Change Colours?</input></td>
                             </tr>
 
                             <tr><td>Timescale </td>
@@ -342,51 +328,89 @@
 
                 <div class="blockly-col">
 
-                    <!--<div id="blocklyDiv" style="width: 800px; height: 500px;">-->
-                    <div class="blocklyDiv" id="blocklyDiv">
+                  <div id='statusMessage'></div>
+
+<div class="tab">
+  <button class="tablinks" id="blocklyTabButton" onclick="openTab(event, 'blocklyTab')">Blockly</button>
+  <button class="tablinks" id="javascriptTabButton" onclick="openTab(event, 'javascriptTab')">Javascript</button>
+</div>
+
+<div class="tabcontent" id="blocklyTab">
 
                     <div id="blocklyControlsDiv">
                         <table cellpadding="2">
                             <tr>
-                            <td><button type="button" id="clearButton">Clear</button></td>
+                            <td><button type="button" id="blocklyClearButton">Clear</button></td>
 
                             <td><div class="file-box">
                                 <label id="loadLabel">Load</label>
-                                <input type="file" id="fileLoader" value="pheromone_test.xml"></input></div></td>
+                                <input type="file" id="blocklyFileLoader" value="pheromone_test.xml"></input></div></td>
 
                             <td><div class="file-box">
-                                <button type="button" id="saveButton">Save As</button>
-                                <input type="text" id="saveFileName" value="blocks.xml"></input></div></td>
+                                <button type="button" id="blocklySaveButton">Save As</button>
+                                <input type="text" id="blocklySaveFileName" value="blocks.xml"></input></div></td>
 
-                            <td><button type="button" id="showJSButton">Show Javascript</button></td>
+                            <td><button type="button" id="blocklyTransferButton">Transfer to Javascript (Clears Old Content)</button></td>
 
-                            <td><button type="button" id="showXMLButton">Show XML</button></td>
+                            <!--
+                            <td><button type="button" id="blocklyShowXMLButton">Show XML</button></td>
+                            -->
 
                             </tr>
+
+                            
+                            <tr id="blocklyArea">
+                              <div id="blocklyDiv" style="position: absolute"></div>
+                            </tr>
                         </table>
-
-                        <div id='statusMessage'></div>
-
                     </div>
 
                 </div>
 
+<div class="tabcontent" id="javascriptTab" style="width: 800px; height: 800px">
+                    <div id="jsControlsDiv">
+                        <table cellpadding="2">
+                            <tr>
+                            <td><button type="button" id="jsClearButton">Clear</button></td>
+
+                            <td><div class="file-box">
+                                <label id="loadLabel">Load</label>
+                                <input type="file" id="jsFileLoader" value="controller.js"></input></div></td>
+
+                            <td><div class="file-box">
+                                <button type="button" id="jsSaveButton">Save As</button>
+                                <input type="text" id="jsSaveFileName" value="controller.js"></input></div></td>
+
+                            </tr>
+                        </table>
+                    </div>
+
+
+  <div class="javascriptDiv" id="javascriptDiv">
+  </div>
+</div>  
+
             </div>
+
         </div>
 
         <!-- My scripts -->
+        <script src="js/jsEditor.js"></script>
         <script src="js/populate.js"></script>
         <script src="js/sensors.js"></script>
         <script src="js/robot.js"></script>
         <script src="js/jsControllers.js"></script>
-        <script src="js/blocklyController.js"></script>
+        <script src="js/Controller.js"></script>
         <script src="js/analysis.js"></script>
         <script src="js/CustomRender.js"></script>
         <script src="js/valueGrids.js"></script>
         <script src="js/distToSegment.js"></script>
         <script src="js/nest.js"></script>
-        <script src="js/main.js"></script>
         <script src="js/blocklyConfig.js"></script>
+        <script src="js/main.js"></script>
+
+        <!-- For my hacky tabbing between Blockly and Javascript -->
+        <script src="js/tabbing.js"></script>
 
     </body>
 </html>
