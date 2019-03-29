@@ -43,7 +43,7 @@ function getForwardAction() {
         flashOn: false,
         emitPheromone: false,
         textMessage: "",
-        textColour: ""
+        textColour: "blue"
     };
 }
 

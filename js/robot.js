@@ -43,7 +43,6 @@ class Robot {
         // Create a small massless body to indicate the orientation of the bot.
         let angleBody = Bodies.rectangle(x + 0.5*robotRadius, y, 0.9*robotRadius, 0.1*robotRadius);
         angleBody.render.opacity = 1.0;
-        angleBody.render.strokeStyle = "white";
         angleBody.render.fillStyle = "white";
         angleBody.objectType = ObjectTypes.ROBOT;
         angleBody.label = "Robot Angle Indicator";
@@ -132,7 +131,7 @@ class Robot {
         this.body.robotParent = this;
         this.holdConstraint = null;
         this.text = "";
-        this.textColour = "cyan";
+        this.textColour = "green";
 
         // Grid probes are represented only as relative (distance, angle) pairs
         // which which give the points at which the robot can sample the grid.
@@ -311,7 +310,7 @@ class Robot {
     // robot.
     drawExtraInfo(context) {
         context.fillStyle = this.textColour;
-        context.fillText(this.text, this.x, this.y-6);
+        context.fillText(this.text, this.x, this.y+7);
 
         if (!this.showExtraInfo) {
             return;

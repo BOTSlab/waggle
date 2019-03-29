@@ -85,7 +85,8 @@ class Controller {
                                 gripperOn: gripperOn,
                                 flashOn: flashOn,
                                 emitPheromone: emitPheromone,
-                                textMessage: textMessage };
+                                textMessage: textMessage,
+                                textColour: "lightgrey" };
 
                 this.variableA = variableA;
                 this.variableB = variableB;
