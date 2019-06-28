@@ -25,11 +25,17 @@ function openTab(evt, divName) {
   } else if (divName == "javascriptTab") {
     myGlobals.usingBlockly = false;
     myCodeMirror.refresh();
+  } else if (divName == "hardcodedTab") {
+    myGlobals.usingBlockly = false;
   }
 }
 
 // A dummy event to setup Blockly as the default tab.
 var dummyEvent = {};
-dummyEvent.currentTarget = document.getElementById('blocklyTabButton')
-openTab(dummyEvent, 'blocklyTab');
+
+//dummyEvent.currentTarget = document.getElementById('blocklyTabButton')
+//openTab(dummyEvent, 'blocklyTab');
+
+dummyEvent.currentTarget = document.getElementById('hardcodedTabButton')
+openTab(dummyEvent, 'hardcodedTab');
 

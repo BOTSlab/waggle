@@ -63,7 +63,7 @@ var Mouse = Matter.Mouse;
                 enabled: true,
                 wireframes: false,
                 showSleeping: true,
-                showDebug: false,
+                showDebug: true,
                 showBroadphase: false,
                 showPheromoneGrid: true,
                 showBounds: false,
@@ -297,7 +297,7 @@ var Mouse = Matter.Mouse;
      * @method world
      * @param {render} render
      */
-    CustomRender.world = function(render, robots, valueGrid) {
+    CustomRender.world = function(render, simState, valueGrid) {
         var engine = render.engine,
             world = engine.world,
             canvas = render.canvas,
@@ -417,12 +417,12 @@ var Mouse = Matter.Mouse;
             CustomRender.grid(render, engine.broadphase, context);
 
         if (options.showDebug)
-            CustomRender.debug(render, context);
+            CustomRender.debug(render, context, simState);
 
-        if (robots) {
-            for (let i=0; i<robots.length; i++) {
+        if (simState.robots) {
+            for (let i=0; i<simState.robots.length; i++) {
 
-                robots[i].drawExtraInfo(context);
+                simState.robots[i].drawExtraInfo(context);
 
                 // Optionally, draw an extra long heading indicator.
                 /*
@@ -455,7 +455,7 @@ var Mouse = Matter.Mouse;
      * @param {render} render
      * @param {CustomRenderingContext} context
      */
-    CustomRender.debug = function(render, context) {
+    CustomRender.debug = function(render, context, simState) {
         var c = context,
             engine = render.engine,
             world = engine.world,
@@ -464,31 +464,37 @@ var Mouse = Matter.Mouse;
             bodies = Composite.allBodies(world),
             space = "    ";
 
-        if (engine.timing.timestamp - (render.debugTimestamp || 0) >= 500) {
+//        if (engine.timing.timestamp - (render.debugTimestamp || 0) >= 500) {
             var text = "";
 
-            if (metrics.timing) {
-                text += "fps: " + Math.round(metrics.timing.fps) + space;
-            }
+// AV
+//            if (metrics.timing) {
+//                text += "fps: " + Math.round(metrics.timing.fps) + space;
+//            }
+text += "render delta (ms): " + Math.round(Date.now() - (render.debugTimestamp));
+text += "\nelapsed (ms): " + simState.clockElapsed;
 
 
             render.debugString = text;
-            render.debugTimestamp = engine.timing.timestamp;
-        }
+//            render.debugTimestamp = engine.timing.timestamp;
+render.debugTimestamp = Date.now();
+//        }
 
         if (render.debugString) {
-            c.font = "12px Arial";
+            c.font = "18px Arial";
 
             if (options.wireframes) {
                 c.fillStyle = 'rgba(255,255,255,0.5)';
             } else {
-                c.fillStyle = 'rgba(0,0,0,0.5)';
+// AV
+c.fillStyle = 'rgba(255,255,255,0.75)';
+//                c.fillStyle = 'rgba(0,0,0,0.5)';
             }
 
             var split = render.debugString.split('\n');
 
             for (var i = 0; i < split.length; i++) {
-                c.fillText(split[i], 50, 50 + i * 18);
+                c.fillText(split[i], 100, 25 + i * 18);
             }
         }
     };

@@ -47,6 +47,18 @@ function getForwardAction() {
     };
 }
 
+function getAction(linear, angular) {
+    return {
+        linearSpeed: linear,
+        angularSpeed: angular,
+        gripperOn: false,
+        flashOn: false,
+        emitPheromone: false,
+        textMessage: "",
+        textColour: "cyan"
+    };
+}
+
 // Used as a fundamental obstacle (robot/wall) avoidance behaviour.  Returns
 // null if there is nothing to avoid.
 function getObstacleAvoidanceAction(sensorReadings) {
@@ -211,11 +223,11 @@ class OrbitController {
     }
 
     /* VERSION 1: THIS VERSION WORKS WHEN THE CENTRE SENSOR IS FORWARD OF THE
-       LEFT AND RIGHT SENSORS. */
+       LEFT AND RIGHT SENSORS. 
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
         var action = getForwardAction();
 
-        if (sensorReadings.leftObstacle.count > 0) {
+        if (sensorReadings.leftWall.count > 0) {
             action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
             return action;
         }
@@ -260,16 +272,16 @@ class OrbitController {
         // SHOULDN'T REACH HERE.
         return null;
     }
+    */
 
     /* VERSION 2: THIS VERSION IS FOR ALL THREE SENSORS IN A LINE (LIKE ON THE
        ZUMO).  WE FAKE THE VERSION ABOVE BY USING THE LAST LEFT AND RIGHT
        SENSORS SO THAT WE STILL GET A TRIANGLE OF VALUES SAMPLED FROM THE
        SCALAR FIELD. */
-    /*
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
         var action = getForwardAction();
 
-        if (sensorReadings.leftObstacle.count > 0) {
+        if (sensorReadings.leftWall.count > 0) {
             action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
             return action;
         }
@@ -305,7 +317,8 @@ class OrbitController {
         this.lastRightNest = rightNest;
         return action;
     }
-    */
+
+    
     /* VERSION 3: INTENDED FOR A RANDOMIZED BINARY SCALAR FIELD WHERE QUEUES
        OF PAST SENSOR VALUES ARE USED---BETTER EMULATING THE USE OF THE LINE
        SENSORS ON THE ZUMO. */
@@ -313,7 +326,7 @@ class OrbitController {
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
         var action = getForwardAction();
 
-        if (sensorReadings.leftObstacle.count > 0) {
+        if (sensorReadings.leftWall.count > 0) {
             action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
             return action;
         }
@@ -444,7 +457,7 @@ class OrbitalConstructionController {
 /* Like the version above, but using three line sensors in a row to replicate
  * the situation on robots like the Zumo32U4 or Alphabot2. */
 /*
-class OrbitalConstructionController2 {
+class OrbitalConstructionControllerLINESENSORS {
     constructor() {
         this.innie = Math.random() < 0.5;
         if (this.innie) {
@@ -463,7 +476,7 @@ class OrbitalConstructionController2 {
             action.flashOn = true; // To visually distinguish innies/outies
         }
 
-        if (sensorReadings.leftObstacle.count > 0) {
+        if (sensorReadings.leftWall.count > 0) {
             action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
             return action;
         }
@@ -515,16 +528,84 @@ class OrbitalConstructionController2 {
 }
 */
 
-/* Evolving from the original "OrbitalConstructionController" of the SOCO 2018
- * paper, this one treats walls and robots separately. */
-class OrbitalConstructionController3 {
+
+/* Evolving from the original "OrbitalController" of the SOCO 2018
+ * paper, this has the following fundamental differences:
+ *    - Adapted sensor positions for a wedge at the front of the robot.
+ */
+class OrbitController2 {
     constructor() {
+        this.threshold = 0.75;
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        var action = getForwardAction();
+
+        if (sensorReadings.leftWall.count > 0) {
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        }
+
+        var leftNest = sensorReadings.leftProbe.nestValue;
+        var centreNest = sensorReadings.centreProbe.nestValue;
+        var rightNest = sensorReadings.rightProbe.nestValue;
+
+        if (rightNest >= centreNest && centreNest >= leftNest) {
+            // The gradient is in the desired orientation with the highest
+            // sensed value to the right, then the centre value in the middle,
+            // followed by the lowest on the left.
+
+            action.textColour = "red";
+
+            // We now act to maintain the centre value at the desired isoline.
+            if (centreNest < this.threshold) {
+                action.textMessage = "A-";
+                action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+                return action;
+            } else {
+                action.textMessage = "A+";
+                action.angularSpeed = -0.3 * myGlobals.MAX_ANGULAR_SPEED;
+                return action;
+            }
+
+        } else if (centreNest >= rightNest && centreNest >= leftNest) {
+            // We are heading uphill of the gradient, turn left to return to a
+            // clockwise orbit.
+            action.textMessage = "B";
+            action.textColour = "green";
+            action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        } else {
+            // We are heading downhill, turn right to return to clockwise orbit.
+            action.textMessage = "C";
+            action.textColour = "white";
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            return action;
+        }
+
+        // SHOULDN'T REACH HERE.
+        return null;
+    }
+}
+
+/* Evolving from the original "OrbitalConstructionController" of the SOCO 2018
+ * paper, this has the following fundamental differences:
+ *    - treats walls and robots separately 
+ */
+class OrbitalConstructionController2 {
+    constructor() {
+        this.innie = false;
+        this.threshold = 0.75;
+        /*
         this.innie = Math.random() < 0.5;
         if (this.innie) {
             this.threshold = 0.75
         } else {
             this.threshold = 0.7
         }
+        */
+
+        this.lastAngularSpeed = 0;
     }
 
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
@@ -533,17 +614,10 @@ class OrbitalConstructionController3 {
             action.flashOn = true; // To visually distinguish innies/outies
         }
 
-        if (sensorReadings.leftWall.count > 0) {
+        if (sensorReadings.rightWall.count > 0) {
             action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
             return action;
         }
-        // Original behaviour
-        /*
-        if (sensorReadings.leftRobot.count > 0) {
-            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
-            return action;
-        }
-        */
         if (sensorReadings.rightRobot.count > 0) {
             if (this.innie) {
                 action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
@@ -558,9 +632,12 @@ class OrbitalConstructionController3 {
         var centreNest = sensorReadings.centreProbe.nestValue;
         var rightNest = sensorReadings.rightProbe.nestValue;
         var leftPucks = sensorReadings.leftRedPuck.count;
-        var rightPucks = sensorReadings.rightRedPuck.count;
+//        var rightPucks = sensorReadings.rightRedPuck.count;
 
-        if (rightNest >= centreNest && centreNest >= leftNest) {
+        var diffThreshold = 0.0;//0.02;
+
+
+        if (rightNest - centreNest >= diffThreshold && centreNest - leftNest >= diffThreshold) {
             // The gradient is in the desired orientation with the highest
             // sensed value to the right, then the centre value in the middle,
             // followed by the lowest on the left.
@@ -569,36 +646,258 @@ class OrbitalConstructionController3 {
             // to nudge a puck inwards or outwards.
             if (this.innie && rightPucks > 0) {
                 action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
-                action.emitPheromone = 10.0; // For debugging
+                this.lastAngularSpeed = action.angularSpeed;
+                action.textColour = "red";
+                action.textMessage = "AT";
                 return action;
             } else if (!this.innie && leftPucks > 0) {
+                action.textColour = "red";
+                action.textMessage = "AT";
                 action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
-                action.emitPheromone = 10.0; // For debugging
+                this.lastAngularSpeed = action.angularSpeed;
                 return action;
             } 
 
             // We now act to maintain the centre value at the desired isoline.
             if (centreNest < this.threshold) {
+                action.textColour = "red";
+                action.textMessage = "A+";
                 action.angularSpeed = 0.3 * myGlobals.MAX_ANGULAR_SPEED;
+                this.lastAngularSpeed = action.angularSpeed;
                 return action;
             } else {
+                action.textColour = "red";
+                action.textMessage = "A-";
                 action.angularSpeed = -0.3 * myGlobals.MAX_ANGULAR_SPEED;                
+                this.lastAngularSpeed = action.angularSpeed;
                 return action;
             }
 
-        } else if (centreNest >= rightNest && centreNest >= leftNest) {
+        } else if (centreNest - rightNest >= diffThreshold && centreNest - leftNest >= diffThreshold) {
+
             // We are heading uphill of the gradient, turn left to return to a
             // clockwise orbit.
+            action.textColour = "green";
+            action.textMessage = "B";
             action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+            this.lastAngularSpeed = action.angularSpeed;
             return action;
-        } else {
-            // We are heading downhill, turn right to return to clockwise orbit.
+
+        } else if (rightNest - centreNest >= diffThreshold) {
+
+            if (this.innie && rightPucks > 0) {
+                action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+                this.lastAngularSpeed = action.angularSpeed;
+                action.textColour = "red";
+                action.textMessage = "AT";
+                return action;
+            } else if (!this.innie && leftPucks > 0) {
+                action.textColour = "red";
+                action.textMessage = "AT";
+                action.angularSpeed = - myGlobals.MAX_ANGULAR_SPEED;
+                this.lastAngularSpeed = action.angularSpeed;
+                return action;
+            } 
+
+            // We are heading uphill of the gradient, turn left to return to a
+            // clockwise orbit.
+            action.textColour = "black";
+            action.textMessage = "X";
             action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            this.lastAngularSpeed = action.angularSpeed;
             return action;
+
+        } else if (leftNest - centreNest >= diffThreshold) {
+
+            // We are heading uphill of the gradient, turn left to return to a
+            // clockwise orbit.
+            action.textColour = "black";
+            action.textMessage = "Y";
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            this.lastAngularSpeed = action.angularSpeed;
+            return action;
+    
+        } else {
+            /*
+            // We are heading downhill, turn right to return to clockwise orbit.
+            action.textColour = "white";
+            action.textMessage = "C";
+            action.angularSpeed = myGlobals.MAX_ANGULAR_SPEED;
+            this.lastAngularSpeed = action.angularSpeed;
+            return action;
+            */
+
+            action.angularSpeed = this.lastAngularSpeed;  
+            return action;          
         }
 
         // SHOULDN'T REACH HERE.
         return null;
+    }
+}
+
+/* Just for plotting purposes
+ */
+class OC2PlotController {
+    constructor() {
+        this.threshold = 1.0;
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        var action = getZeroAction();
+
+        var L = sensorReadings.leftProbe.nestValue;
+        var C = sensorReadings.centreProbe.nestValue;
+        var R = sensorReadings.rightProbe.nestValue;
+
+        if (L >= C && C >= R) {
+            action.textMessage = "LCR";
+            action.textColour = "lime";
+        } else if (L >= R && R >= C) {
+            action.textMessage = "LRC";
+            action.textColour = "green";
+
+        } else if (C >= L && L >= R) {
+            action.textMessage = "CLR";
+            action.textColour = "cyan";
+        } else if (C >= R && R >= L) {
+            action.textMessage = "CRL";
+            action.textColour = "teal";
+
+        } else if (R >= L && L >= C) {
+            action.textMessage = "RLC";
+            action.textColour = "red";
+        } else if (R >= C && C >= C) {
+            action.textMessage = "RCL";
+            action.textColour = "maroon";
+        }
+
+        return action;          
+    }
+}
+
+class OC2VariantController {
+    constructor() {
+        this.threshold = 0.1;
+        this.puckVariant = 5;
+        this.thresholdVariant = 1;
+        this.defaultVariant = 12;
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        let left = getAction(myGlobals.MAX_FORWARD_SPEED, -myGlobals.MAX_ANGULAR_SPEED);
+        let right = getAction(myGlobals.MAX_FORWARD_SPEED, myGlobals.MAX_ANGULAR_SPEED);
+        let veerLeft = getAction(myGlobals.MAX_FORWARD_SPEED, -0.3*myGlobals.MAX_ANGULAR_SPEED);
+        let veerRight = getAction(myGlobals.MAX_FORWARD_SPEED, 0.3*myGlobals.MAX_ANGULAR_SPEED);
+
+        if (sensorReadings.rightWall.count > 0) {
+            return veerRight;
+        }
+
+        let L = sensorReadings.leftProbe.nestValue;
+        let C = sensorReadings.centreProbe.nestValue;
+        let R = sensorReadings.rightProbe.nestValue;
+        let leftPucks = sensorReadings.leftRedPuck.count;
+
+        // Determine the current ordering of scalar field sensors.
+        let ordering = 0;
+        if (L >= C && C >= R) {
+            //action.textMessage = "LCR";
+            //action.textColour = "lime";
+            ordering = 0b000001;
+        } else if (L >= R && R >= C) {
+            //action.textMessage = "LRC";
+            //action.textColour = "green";
+            ordering = 0b000010;            
+        } else if (C >= L && L >= R) {
+            //action.textMessage = "CLR";
+            //action.textColour = "cyan";
+            ordering = 0b000100;            
+        } else if (C >= R && R >= L) {
+            //action.textMessage = "CRL";
+            //action.textColour = "teal";
+            ordering = 0b001000;            
+        } else if (R >= L && L >= C) {
+            //action.textMessage = "RLC";
+            //action.textColour = "red";
+            ordering = 0b010000;            
+        } else if (R >= C && C >= L) {
+            //action.textMessage = "RCL";
+            //action.textColour = "maroon";
+            ordering = 0b100000;            
+        }
+
+        if (this.puckVariant & ordering && leftPucks > 0)   
+            return left;
+        if (this.thresholdVariant & ordering) {
+            if (C < this.threshold)
+                return veerLeft;
+            else
+                return veerRight;
+        }
+        if (this.defaultVariant & ordering)
+            return right;
+        else
+            return left;
+    }
+}
+
+class OC2Controller {
+    constructor() {
+        this.threshold = 0.1;
+    }
+
+    getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
+        let left = getAction(myGlobals.MAX_FORWARD_SPEED, -myGlobals.MAX_ANGULAR_SPEED);
+        let right = getAction(myGlobals.MAX_FORWARD_SPEED, myGlobals.MAX_ANGULAR_SPEED);
+        let veerLeft = getAction(myGlobals.MAX_FORWARD_SPEED, -0.3*myGlobals.MAX_ANGULAR_SPEED);
+        let veerRight = getAction(myGlobals.MAX_FORWARD_SPEED, 0.3*myGlobals.MAX_ANGULAR_SPEED);
+
+        if (sensorReadings.rightWall.count > 0) {
+            return veerRight;
+        }
+
+        let L = sensorReadings.leftProbe.nestValue;
+        let C = sensorReadings.centreProbe.nestValue;
+        let R = sensorReadings.rightProbe.nestValue;
+        let leftPucks = sensorReadings.leftRedPuck.count;
+
+        if (L >= C && C >= R) {
+            if (leftPucks > 0) return left;
+            if (C < this.threshold)
+                return veerLeft;
+            else
+                return veerRight;
+
+        } else if (L >= R && R >= C) {
+            return left;
+
+        } else if (C >= L && L >= R) {
+            if (leftPucks > 0) return left;
+            if (C < this.threshold)
+                return veerLeft;
+            else
+                return veerRight;
+
+        } else if (C >= R && R >= L) {
+            if (leftPucks > 0) return left;
+            if (C < this.threshold)
+                return veerLeft;
+            else
+                return veerRight;
+
+        } else if (R >= L && L >= C) {
+            if (C < this.threshold)
+                return veerLeft;
+            else
+                return veerRight;
+
+        } else if (R >= C && C >= L) {
+            if (C < this.threshold)
+                return veerLeft;
+            else
+                return veerRight;
+        }
     }
 }
 

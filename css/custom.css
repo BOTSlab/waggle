@@ -34,7 +34,8 @@
 }
 
 .matter-col {
-    width: 45%;
+/*    width: 45%; */
+    width: 100%; 
 }
 
 .blocklyDiv {

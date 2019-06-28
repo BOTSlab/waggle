@@ -226,7 +226,9 @@
 
 
         <!-- For matter -->
-        <script src="js/vendor/matter.js"></script>
+        <!--<script src="js/vendor/matter_0.14.2.js"></script>-->
+        <script src="js/vendor/matter_0.14.2_optimized.js"></script>
+        <script src="js/vendor/decomp.js"></script>
 
         <!-- For the ability to seed the pseudo-random number generator for
              Math.random() -->
@@ -234,7 +236,8 @@
 
         <!-- For plotting. -->
         <script src="js/vendor/highcharts.js"></script>
-        <script src="https://code.highcharts.com/modules/exporting.js"></script>
+        <!--<script src="https://code.highcharts.com/modules/exporting.js"></script>-->
+        <script src="js/vendor/exporting.js"></script>
 
         <!-- For saving the blocks to a local file. -->
         <script src="js/vendor/FileSaver.min.js"></script>
@@ -267,6 +270,10 @@
 
                             <td><input type="checkbox" id="greenToBlueCheckbox">Change Colours?</input></td>
                             </tr>
+
+                            <tr><td>Render Skip </td>
+                                <td><input id='renderSkipSlider' type='range' min='1' value='1' max='100' step='1'/></td>
+                                <td id='renderSkipText'>1</td></tr> 
 
                             <tr><td>Timescale </td>
                                 <td><input id='timeScaleSlider' type='range' min='0.1' value='1.0' max='1.0' step='0.1'/></td>
@@ -335,6 +342,7 @@
 <div class="tab">
   <button class="tablinks" id="blocklyTabButton" onclick="openTab(event, 'blocklyTab')">Blockly</button>
   <button class="tablinks" id="javascriptTabButton" onclick="openTab(event, 'javascriptTab')">Javascript</button>
+  <button class="tablinks" id="hardcodedTabButton" onclick="openTab(event, 'hardcodedTab')">Hard-Coded</button>
 </div>
 
 <div class="tabcontent" id="blocklyTab">
@@ -390,6 +398,9 @@
 
   <div class="javascriptDiv" id="javascriptDiv">
   </div>
+</div>  
+
+<div class="tabcontent" id="hardcodedTab">
 </div>  
 
             </div>

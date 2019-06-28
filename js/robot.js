@@ -4,9 +4,15 @@
  */
 
 /*
-let gridCellWidth = 50;
+let gridCellWidth = 100;
 let lastGridX = gridCellWidth;
 let lastGridY = gridCellWidth;
+*/
+
+/*
+let startCircleRadius = 145;
+let startCircleN = 16;
+let startCircleI = 0;
 */
 
 class Robot {
@@ -22,15 +28,25 @@ class Robot {
         // Choose a random position within the walls.
         let x = Math.floor(t + robotRadius + (w - 2 * t - 2 * robotRadius) * Math.random());
         let y = Math.floor(t + robotRadius + (h - 2 * t - 2 * robotRadius) * Math.random());
-        /*
-        let x = lastGridX;
-        let y = lastGridY;
-        lastGridX = lastGridX + gridCellWidth;
-        if (lastGridX >= w) {
-            lastGridX = gridCellWidth;
-            lastGridY = lastGridY + gridCellWidth;
-        }
-        */
+
+/*
+x = lastGridX;
+y = lastGridY;
+lastGridX = lastGridX + gridCellWidth;
+if (lastGridX >= w) {
+    lastGridX = gridCellWidth;
+    lastGridY = lastGridY + gridCellWidth;
+}
+*/
+
+/*
+x = w/2 + startCircleRadius*Math.cos(startCircleI * 2*Math.PI / startCircleN);
+y = h/2 + startCircleRadius*Math.sin(startCircleI * 2*Math.PI / startCircleN);
+startCircleI = startCircleI + 1;
+*/
+
+        // Parts of the robot.  Each part created below will be pushed onto this list.
+        let parts = [];
 
         // Create the main body of the robot
         this.mainBody = Bodies.circle(x, y, robotRadius);
@@ -39,12 +55,34 @@ class Robot {
         this.mainBody.render.fillStyle = ObjectColours[ObjectTypes.ROBOT];
         this.mainBody.frictionAir = myGlobals.frictionAir;
         this.mainBody.label = "Robot Main Body";
+        parts.push(this.mainBody);
+
+        if (myGlobals.configuration == "#OC2") {
+            // Add a pointed wedge to the front of the robot.
+
+            //this.wedgeBody = Body.create();
+            //let vertices = [{x:0, y:robotRadius}, {x:0+3*robotRadius, y:0}, {x:0, y:-robotRadius}];
+            //Matter.Vertices.create(vertices, this.wedgeBody);
+
+            let vertices = [Vector.create(0, robotRadius), Vector.create(1.5*robotRadius, 0), Vector.create(0, -robotRadius)];
+
+            this.wedgeBody = Bodies.fromVertices(x, y, vertices);
+            Body.translate(this.wedgeBody, {x:0.75*robotRadius, y:0});
+
+            this.wedgeBody.objectType = ObjectTypes.ROBOT;
+            this.wedgeBody.render.strokeStyle = ObjectColours[ObjectTypes.ROBOT];
+            this.wedgeBody.render.fillStyle = ObjectColours[ObjectTypes.ROBOT];
+            this.wedgeBody.frictionAir = 0;
+            this.wedgeBody.label = "Robot Wedge Body";
+
+            parts.push(this.wedgeBody);
+        }
 
         // Create a small massless body to indicate the orientation of the bot.
         let angleBody = Bodies.rectangle(x + 0.5*robotRadius, y, 0.9*robotRadius, 0.1*robotRadius);
         angleBody.render.opacity = 1.0;
         angleBody.render.fillStyle = "white";
-        angleBody.objectType = ObjectTypes.ROBOT;
+        //angleBody.objectType = ObjectTypes.ROBOT;
         angleBody.label = "Robot Angle Indicator";
         angleBody.mass = 0;
         angleBody.inverseMass = Infinity;
@@ -52,6 +90,8 @@ class Robot {
         angleBody.frictionAir = 0;
         angleBody.inertia = 0;
         angleBody.inverseInertia = Infinity;
+        parts.push(angleBody);
+
 
         this.sensors = {};
 
@@ -74,16 +114,20 @@ class Robot {
             this.addInnerGreenSensor(x, y, myGlobals, myGlobals.innerSensorRadius);
         } else if (myGlobals.configuration == "#FIREFLY") {
             this.addFireflySensors(x, y, myGlobals);
+        } else if (myGlobals.configuration == "#MAJORITY") {
+            this.addMajoritySensors(x, y, myGlobals);
         } else if (myGlobals.configuration == "#PHEROMONE") {
             // Using a larger sensor for this configuration because otherwise
             // pucks are left on the edge.  A larger sensor is problematic for
             // clustering/sorting because it induces longer-distance
             // grabs/releases which can mess up clusters.
             this.addInnerGreenSensor(x, y, myGlobals, 2*myGlobals.innerSensorRadius);
-        } else if (myGlobals.configuration == "#CONSTRUCT" ||
-                   myGlobals.configuration == "#ENLARGED_ROBOT") {
+        } else if (myGlobals.configuration == "#CONSTRUCT" || myGlobals.configuration == "#ENLARGED_ROBOT") {
             this.addConstructSensors(x, y, ObjectTypes.RED_PUCK, myGlobals);
             this.addConstructSensors(x, y, ObjectTypes.GREEN_PUCK, myGlobals);
+        } else if (myGlobals.configuration == "#OC2") {
+            this.addOC2Sensors(x, y, ObjectTypes.RED_PUCK, myGlobals);
+            this.addOC2Sensors(x, y, ObjectTypes.GREEN_PUCK, myGlobals);
         }
 
         // Initialize the sensor bodies
@@ -102,7 +146,7 @@ class Robot {
             // Visual properties.
             sensorBody.render.strokeStyle = "blue";
             sensorBody.render.fillStyle = "blue";
-            sensorBody.render.opacity = 0.40;
+            sensorBody.render.opacity = 0.30;
             if (key == "innerGreenPuck" || key == "innerRedPuck") {
                 sensorBody.render.opacity = 0.2;
             }
@@ -112,7 +156,6 @@ class Robot {
         }
 
         // Add the mainBody, then all sensor parts to the 'parts' array.
-        let parts = [this.mainBody, angleBody]
         for (let key in this.sensors) {
             let sensorBody = this.sensors[key].body;
             parts.push(sensorBody);
@@ -137,9 +180,10 @@ class Robot {
         // which which give the points at which the robot can sample the grid.
         this.gridProbes = {};
         if (myGlobals.configuration == "#PHEROMONE" ||
-            myGlobals.configuration == "#CONSTRUCT" ||
+            myGlobals.configuration == "#CONSTRUCT" || myGlobals.configuration == "#OC2" ||
             myGlobals.configuration == "#ENLARGED_ROBOT") {
             let angle = Math.PI/4.0;
+//let angle = 3.0*Math.PI/4.0;
             let distance = 2*myGlobals.robotRadius;
 
             this.gridProbes.leftProbe = { distance: distance, angle: -angle };
@@ -197,8 +241,13 @@ class Robot {
             let y = this.y + gp.distance*Math.sin(this.body.angle + gp.angle); 
             let [i, j] = getGridCoords(myGlobals, x, y);
 
+            let noise = 0;
+            //if (gp.angle > 0) {
+            //    noise = 0.1 * (Math.random() - 0.5);
+            //}
+
             sensorReadings[key] = { 
-                                    nestValue: nestGrid[i][j],
+                                    nestValue: nestGrid[i][j] + noise,
                                     pheromoneValue: pheromoneGrid[i][j]
                                    };
         }
@@ -210,17 +259,25 @@ class Robot {
         let rr = myGlobals.robotRadius;
         let r = myGlobals.obstacleSensorSizeFactor * rr;
 
+        // Forward shift of obstacle sensors.
+        let forwardShift = 0;
+        if (myGlobals.configuration == "#OC2") {
+            forwardShift = 0.75*rr;
+        }
+
         // Left sensor
         let angle = -Math.PI/4;
-        let dx = (rr + r) * Math.cos(angle);
+        let dx = (rr + r) * Math.cos(angle) + forwardShift;
         let dy = (rr + r) * Math.sin(angle);
+/*
         let leftBody = Bodies.circle(x + dx, y + dy, r, {isSensor: true});
         let leftSensorName = "left" + sensorName;
         this.sensors[leftSensorName] = new SimpleObjectSensor(leftBody, this,
                                                               sensedType);
+*/
 
         // Right sensor
-        dx = (rr + r) * Math.cos(-angle);
+        dx = (rr + r) * Math.cos(-angle) + forwardShift;
         dy = (rr + r) * Math.sin(-angle);
         let rightBody = Bodies.circle(x + dx, y + dy, r, {isSensor: true});
         let rightSensorName = "right" + sensorName;
@@ -273,6 +330,17 @@ class Robot {
         this.sensors.flash = new FlashSensor(flashBody, this);
     }
 
+    // Create the sensors used in the majority configuration.
+    addMajoritySensors(x, y, myGlobals) {
+        let flashSensorRadius = 3.0 * myGlobals.robotRadius;
+        let flashBody = Bodies.circle(x, y, flashSensorRadius, {isSensor: true});
+        this.sensors.flash = new FlashSensor(flashBody, this);
+
+        let robotSensorBody = Bodies.circle(x, y, flashSensorRadius, {isSensor: true});
+        this.sensors.robots = new SimpleObjectSensor(robotSensorBody, this, 
+                                                               ObjectTypes.ROBOT);
+    }
+
     // Create the sensors used in the construct configurations. 
     addConstructSensors(x, y, type, myGlobals) {
         let rr = myGlobals.robotRadius;
@@ -297,6 +365,52 @@ class Robot {
         } else if (type == ObjectTypes.GREEN_PUCK) {
             this.sensors.rightGreenPuck = new PuckSensor(rightBody, this, type);
         }
+    }
+
+    // Create the sensors used in the OC2 configuration. 
+    addOC2Sensors(x, y, type, myGlobals) {
+        let rr = myGlobals.robotRadius;
+        let pr = myGlobals.puckRadius;
+
+        // The sensors will be arcs.
+
+        // Body of the left sensor.
+        let outerRadius = 5*rr; // 10*rr;
+        let vertices = [Vector.create(0, 0)];
+        let angleDelta = Math.PI / 10.0;
+        for (let angle = -Math.PI/2.0; angle <= 0; angle += angleDelta) {
+            let u = outerRadius * Math.cos(angle);
+            let v = outerRadius * Math.sin(angle);
+
+            vertices.push(Vector.create(u, v));
+        }
+        let leftBody = Bodies.fromVertices(x, y, vertices, {isSensor: true});
+        Body.translate(leftBody, {x:outerRadius/2.0, y:-outerRadius/2.0 + outerRadius/13.0});
+
+        // Make it into a puck sensor of the appropriate type.
+        if (type == ObjectTypes.RED_PUCK) {
+            this.sensors.leftRedPuck = new PuckSensor(leftBody, this, type);
+        } else if (type == ObjectTypes.GREEN_PUCK) {
+            this.sensors.leftGreenPuck = new PuckSensor(leftBody, this, type);
+        }
+/*
+        // Body of the right sensor.
+        vertices = [Vector.create(0, 0)];
+        for (let angle = 0; angle <= Math.PI/2.0; angle += angleDelta) {
+            let u = outerRadius * Math.cos(angle);
+            let v = outerRadius * Math.sin(angle);
+
+            vertices.push(Vector.create(u, v));
+        }
+        let rightBody = Bodies.fromVertices(x, y, vertices, {isSensor: true});
+        Body.translate(rightBody, {x:outerRadius/2.0, y:outerRadius/2.0 - outerRadius/13.0});
+
+        if (type == ObjectTypes.RED_PUCK) {
+            this.sensors.rightRedPuck = new PuckSensor(rightBody, this, type);
+        } else if (type == ObjectTypes.GREEN_PUCK) {
+            this.sensors.rightGreenPuck = new PuckSensor(rightBody, this, type);
+        }
+*/
     }
 
     updateSensorVisibility(showSensors) {

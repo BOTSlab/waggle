@@ -9,7 +9,8 @@ var Engine = Matter.Engine,
     Constraint = Matter.Constraint,
     Composite = Matter.Composite,
     Mouse = Matter.Mouse,
-    MouseConstraint = Matter.MouseConstraint;
+    MouseConstraint = Matter.MouseConstraint,
+    Vector = Matter.Vector;
 
 // create an engine
 var engine = Engine.create();
@@ -27,7 +28,7 @@ var myGlobals = {
     configuration: configuration,
     width : 100,
     height : 800,
-    maxStep : 100000,
+    maxStep : 4000,
     MAX_FORWARD_SPEED: 0.015,
     MAX_ANGULAR_SPEED: 0.2,
     wallThickness: 1000,
@@ -50,7 +51,8 @@ var myGlobals = {
     doAnalysis: true,
     resetAfterMaxStep: false,
     showPheromoneGrid: false,
-    showNestGrid: false
+    showNestGrid: false,
+    renderSkip: 1
 };
 
 // Html customiziation depending upon the configuration.
@@ -87,7 +89,7 @@ if (configuration == "#TUTORIAL") {
     myGlobals.nRedPucks = 30;
     myGlobals.nGreenPucks = 30;
     document.getElementById('gridDiv').style.display = "none";
-} else if (configuration == "#FIREFLY") {
+} else if (configuration == "#reset") {
     myGlobals.width = 500;
     myGlobals.height = 500;
     myGlobals.nRedPucks = 0;
@@ -127,7 +129,7 @@ if (configuration == "#TUTORIAL") {
     myGlobals.pheromoneDecayRate = 0.001;
 
     myGlobals.nRobots = 20; // 10;
-    myGlobals.nRedPucks = 0;
+    myGlobals.nRedPucks = 200;
     //myGlobals.nRedPucks = 250;
     //myGlobals.nRedPucks = 100;
     myGlobals.nGreenPucks = 0;
@@ -142,7 +144,41 @@ if (configuration == "#TUTORIAL") {
     //document.getElementById('nGreenPucksLabel').style.display = "none";
     //document.getElementById('nGreenPucksSlider').style.display = "none";
     //document.getElementById('nGreenPucksText').style.display = "none";
-    document.getElementById('blocklyControlsDiv').style.display = "none";
+//    document.getElementById('blocklyControlsDiv').style.display = "none";
+
+} else if (configuration == "#OC2") {
+    //myGlobals.usingBlockly = false;
+
+    // Big changes from the other configurations where the robot/puck size is modified 
+    // (effects physics/speeds as well).
+    myGlobals.robotRadius = 15;
+    myGlobals.puckRadius = 6;
+    myGlobals.obstacleSensorSizeFactor = 0.15;
+//myGlobals.obstacleSensorSizeFactor = 1.0;
+    myGlobals.MAX_FORWARD_SPEED = 0.15 / 20.0;
+    myGlobals.MAX_ANGULAR_SPEED = 5.0 / 40.0;
+
+    // Changing pheromone rates just because we're using pheromones to show
+    // trails for debugging.
+    myGlobals.pheromoneDiffusionRate = 0.01;
+    myGlobals.pheromoneDecayRate = 0.001;
+
+    myGlobals.nRobots = 10;
+    myGlobals.nRedPucks = 250;
+    //myGlobals.nRedPucks = 250;
+    //myGlobals.nRedPucks = 100;
+    myGlobals.nGreenPucks = 0;
+    //myGlobals.maxStep = 500;
+
+    // Scaling factor w.r.t. 4k resolution (3840x2160)
+    let scaleFrom4k = 4;
+    myGlobals.width = 3840 / scaleFrom4k;
+    myGlobals.height = 2160 / scaleFrom4k;
+    //myGlobals.width = 300;
+    //myGlobals.height = 300;
+    myGlobals.showNestGrid = true;
+    document.getElementById('gridSelect').value = "nest";
+
 } else if (configuration == "#ENLARGED_ROBOT") {
     // This configuration is just to obtain a bigger view of the robot and
     // its sensors.
@@ -163,6 +199,20 @@ if (configuration == "#TUTORIAL") {
     document.getElementById('nGreenPucksLabel').style.display = "none";
     document.getElementById('nGreenPucksSlider').style.display = "none";
     document.getElementById('nGreenPucksText').style.display = "none";
+} else if (configuration == "#MAJORITY") {
+    myGlobals.nRobots = 16;
+    myGlobals.width = 500;
+    myGlobals.height = 500;
+    myGlobals.nRedPucks = 0;
+    myGlobals.nGreenPucks = 0;
+    myGlobals.doAnalysis = false;
+    document.getElementById('nRedPucksLabel').style.display = "none";
+    document.getElementById('nRedPucksSlider').style.display = "none";
+    document.getElementById('nRedPucksText').style.display = "none";
+    document.getElementById('nGreenPucksLabel').style.display = "none";
+    document.getElementById('nGreenPucksSlider').style.display = "none";
+    document.getElementById('nGreenPucksText').style.display = "none";
+    document.getElementById('gridDiv').style.display = "none";
 }
 
 // Further html customization which is independent of the configuration.
@@ -179,6 +229,8 @@ document.getElementById('maxStepSlider').value = myGlobals.maxStep;
 document.getElementById('maxStepText').innerHTML = myGlobals.maxStep;
 document.getElementById('doAnalysisCheckbox').checked = myGlobals.doAnalysis;
 document.getElementById('resetAfterMaxStepCheckbox').checked = myGlobals.resetAfterMaxStep;
+document.getElementById('renderSkipSlider').value = myGlobals.renderSkip;
+document.getElementById('renderSkipText').innerHTML = myGlobals.renderSkip;
 
 // The following properties depend on width and height defined above.
 myGlobals.gridWidth = myGlobals.width / 10;
@@ -236,6 +288,7 @@ var analyzer;
 function reset(seedValue) {
     simState.step = 0;
     simState.resetTime = engine.timing.timestamp;
+    simState.resetClock = Date.now();
 
     Engine.clear(engine);
     World.clear(engine.world);
@@ -292,7 +345,7 @@ function reset(seedValue) {
                                             myGlobals.gridHeight);
     }
 
-    if (myGlobals.configuration == "#CONSTRUCT" ||
+    if (myGlobals.configuration == "#CONSTRUCT" || myGlobals.configuration == "#OC2" ||
         myGlobals.configuration == "#ENLARGED_ROBOT") {
         simState.pheromoneGrid = getZeroGrid(myGlobals.gridWidth, myGlobals.gridHeight);
 
@@ -376,7 +429,6 @@ Events.on(engine, 'tick', function(event) {
 Events.on(engine, 'afterUpdate', function(event) {
     let vt = myGlobals.visibleWallThickness;
     let rr = myGlobals.robotRadius;
-    let pr = myGlobals.puckRadius;
     let w = myGlobals.width;
     let h = myGlobals.height;
 
@@ -404,22 +456,37 @@ Events.on(engine, 'afterUpdate', function(event) {
                             y: h - rr - vt});
         }
     }
-    for (let i=0; i<simState.pucks.length; i++) {
-        let puck = simState.pucks[i];
+
+    if (simState.redPucks) {
+        keepPucksInBounds(simState.redPucks);
+    }
+    if (simState.greenPucks) {
+        keepPucksInBounds(simState.greenPucks);
+    }
+});
+
+function keepPucksInBounds(puckList) {
+    let vt = myGlobals.visibleWallThickness;
+    let pr = myGlobals.puckRadius;
+    let w = myGlobals.width;
+    let h = myGlobals.height;
+
+    for (let i=0; i<puckList.length; i++) {
+        let puck = puckList[i];
         if (puck.position.x < pr + vt) {
             Body.setPosition(puck, {
                             x: pr + vt,
-                            y: robot.body.position.y});
+                            y: puck.position.y});
         }
         if (puck.position.x > w - pr - vt) {
             Body.setPosition(puck, {
                             x: w - pr - vt,
-                            y: robot.body.position.y});
+                            y: puck.position.y});
         }
         if (puck.position.y < pr + vt) {
             Body.setPosition(puck, {
                             x: puck.position.x,
-                            y: rr + vt});
+                            y: pr + vt});
         }
         if (puck.position.y > h - pr - vt) {
             Body.setPosition(puck, {
@@ -427,7 +494,7 @@ Events.on(engine, 'afterUpdate', function(event) {
                             y: h - pr - vt});
         }
     }
-});
+}
 
 function update() {
     manageRobotPopulation();
@@ -442,17 +509,33 @@ function update() {
 
     configSpecificUpdate();
 
-    if (myGlobals.showPheromoneGrid) {
-        CustomRender.world(render, simState.robots, simState.pheromoneGrid);
-    } else if (myGlobals.showNestGrid) {
-        CustomRender.world(render, simState.robots, simState.nestGrid);
-    } else {
-        CustomRender.world(render, simState.robots);
-    }
-
     if (myGlobals.doAnalysis && simState.step <= myGlobals.maxStep) {
         analyzer.analyze(engine.timing.timestamp-simState.resetTime, simState,
                          simState.step == myGlobals.maxStep);
+    }
+
+    // Potentially reset so that the analyzer can plot a new trial.
+    if (myGlobals.resetAfterMaxStep && 
+        simState.step == myGlobals.maxStep &&
+        simState.trials < 10)
+    {
+        simState.trials++;
+        reset();
+    }
+
+    if (simState.step < myGlobals.maxStep) {
+        simState.step++;
+        simState.clockElapsed = Date.now() - simState.resetClock;
+    }
+}
+
+function doRender() {
+    if (myGlobals.showPheromoneGrid) {
+        CustomRender.world(render, simState, simState.pheromoneGrid);
+    } else if (myGlobals.showNestGrid) {
+        CustomRender.world(render, simState, simState.nestGrid);
+    } else {
+        CustomRender.world(render, simState);
     }
 
     // Potentially capture screnshot
@@ -466,25 +549,15 @@ function update() {
             saveAs(blob, ("trial_" + simState.trials + "_step_" + step +".png"));
         });
     }
-
-    // Potentially reset so that the analyzer can plot a new trial.
-    if (myGlobals.resetAfterMaxStep && 
-        simState.step == myGlobals.maxStep &&
-        simState.trials < 10)
-    {
-        simState.trials++;
-        reset();
-    }
-
-    simState.step++;
 }
+
 
 function manageRobotPopulation() {
     // Create/destroy robots if the number contained in 'simState.robots' is
     // less than or greater than myGlobals.nRobots.
     if (simState.robots.length < myGlobals.nRobots) {
 
-        if (myGlobals.configuration == "#FIREFLY") {
+        if (myGlobals.configuration == "#FIREFLY" || myGlobals.configuration == "#MAJORITY") {
             // In #FIREFLY configuration we don't want new robots to be in sync
             // by default.  So we make sure we only create one new robot per
             // controller-update cycle.
@@ -496,6 +569,11 @@ function manageRobotPopulation() {
         // Create one robot per time step.
         var robot = new Robot(engine.world, myGlobals);
         robot.controller = new Controller();
+
+//robot.controller = new OrbitalConstructionController2();
+//robot.controller = new OC2PlotController();
+robot.controller = new OC2VariantController();
+
         /*        
         if (myGlobals.usingBlockly) {
             robot.controller = new BlocklyController();        
@@ -528,9 +606,7 @@ function manageRobotPopulation() {
 }
 
 function configSpecificUpdate() {
-    if (myGlobals.configuration == "#PHEROMONE" || 
-        myGlobals.configuration == "#CONSTRUCT") 
-    {
+    if (myGlobals.configuration == "#PHEROMONE") {
         gridDiffuseAndDecay(myGlobals, simState.pheromoneGrid);
     }
 
@@ -796,9 +872,23 @@ document.body.addEventListener("keydown", function(e) {
 
 // Using Matter.Runner which means we put our main loop code within the 'tick'
 // event.
-var runner = Runner.create({isFixed: true});
-Runner.run(runner, engine);
+//var runner = Runner.create({isFixed: true});
+//Runner.run(runner, engine);
 
+function loop(timestamp) {
+    var progress = timestamp - lastRender
+
+    for (let i=0; i<myGlobals.renderSkip; i++) {
+        Engine.update(engine, 0);
+        update();
+    }
+    doRender();
+
+    lastRender = timestamp
+    window.requestAnimationFrame(loop)
+}
+var lastRender = 0
+window.requestAnimationFrame(loop)
 
 ////////////////////////////////////////////////////////////////////////////
 // Events 
@@ -935,9 +1025,15 @@ greenToBlueCheckbox.addEventListener("change", function() {
     reset('Seed');
 });
 
+
+document.getElementById('renderSkipSlider').oninput = function () {
+    myGlobals.renderSkip = document.getElementById('renderSkipSlider').value;
+    document.getElementById('renderSkipText').innerHTML = myGlobals.renderSkip;
+}
+
 document.getElementById('timeScaleSlider').oninput = function () {
     var value = document.getElementById('timeScaleSlider').value;
-    if (myGlobals.configuration == "#FIREFLY") {
+    if (myGlobals.configuration == "#FIREFLY" || myGlobals.configuration == "#MAJORITY") {
         myGlobals.stepsBetweenControllerUpdates = Math.round(1.0 / (value*value));
         //console.log(myGlobals.stepsBetweenControllerUpdates);
     } else {

@@ -12,7 +12,7 @@ class Analyzer {
                             series: [{ name: '0', data: [] }],
                             redraw: false
                         }); 
-        } else if (config == "#FIREFLY") {
+        } else if (config == "#FIREFLY" || config == "#MAJORITY") {
             this.chart = Highcharts.chart('chartDiv', {
                             chart: { animation: false },
                             title: { text: 'Number of Flashes' },
@@ -42,7 +42,7 @@ class Analyzer {
                             series: [{ name: '0', data: [] }],
                             redraw: false
                         });
-        } else if (config == "#CONSTRUCT") {
+        } else if (config == "#CONSTRUCT" || config == "#OC2") {
             this.chart = Highcharts.chart('chartDiv', {
                             chart: { animation: false },
                             //title: { text: 'Avg. Puck-Tau Abs. Diff.' },
@@ -83,14 +83,14 @@ class Analyzer {
         if (config == "#SIMPLE_CLUSTER" || config == "#ADVANCED_CLUSTER") {
             // value = this.getSecondMoment(simState.redPucks);
             value = this.getPercentageCompletion(simState.redPucks);
-        } else if (config == "#FIREFLY") {
+        } else if (config == "#FIREFLY" || config == "#MAJORITY") {
             value = this.getNumberFlashing(simState.robots);
         } else if (config == "#SORT") {
             value = this.getPercentageCompletionSort(simState.redPucks,
                                                      simState.greenPucks);
         } else if (config == "#PHEROMONE") {
             value = simState.greenPucks.length;
-        } else if (config == "#CONSTRUCT") {
+        } else if (config == "#CONSTRUCT" || config == "#OC2") {
             //value = this.getAveragePuckTauDifference(simState.redPucks, 
             //                                        simState.nestGrid);
             value = this.getPercentageCompletion(simState.redPucks);
