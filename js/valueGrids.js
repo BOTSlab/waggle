@@ -43,8 +43,8 @@ function normalizeGrid(grid, width, height) {
     // proportional to distance.
     for (let i=0; i<width; i++) {
         for (let j=0; j<height; j++) {
-            //grid[i][j] = 1 - grid[i][j] / maxDistance;
-            grid[i][j] = grid[i][j] / maxDistance;
+            grid[i][j] = 1 - grid[i][j] / maxDistance;
+            //grid[i][j] = grid[i][j] / maxDistance;
         }
     }
 }

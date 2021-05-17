@@ -33,9 +33,8 @@ function openTab(evt, divName) {
 // A dummy event to setup Blockly as the default tab.
 var dummyEvent = {};
 
-//dummyEvent.currentTarget = document.getElementById('blocklyTabButton')
-//openTab(dummyEvent, 'blocklyTab');
+dummyEvent.currentTarget = document.getElementById('blocklyTabButton')
+openTab(dummyEvent, 'blocklyTab');
 
-dummyEvent.currentTarget = document.getElementById('hardcodedTabButton')
-openTab(dummyEvent, 'hardcodedTab');
-
+//dummyEvent.currentTarget = document.getElementById('hardcodedTabButton')
+//openTab(dummyEvent, 'hardcodedTab');

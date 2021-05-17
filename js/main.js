@@ -15,6 +15,8 @@ var Engine = Matter.Engine,
 // create an engine
 var engine = Engine.create();
 
+/* MOVED THESE DEFINITIONS TO my_globals.js
+
 // The configuration variable below dictates the sensor configuration of the
 // robot's as well as other aspects of the system.  Its value comes from the
 // part of the URL that follows '#'.  If there is no '#' then we use the
@@ -54,6 +56,7 @@ var myGlobals = {
     showNestGrid: false,
     renderSkip: 1
 };
+*/
 
 // Html customiziation depending upon the configuration.
 if (configuration == "#TUTORIAL") {
@@ -164,7 +167,7 @@ if (configuration == "#TUTORIAL") {
     myGlobals.pheromoneDecayRate = 0.001;
 
     myGlobals.nRobots = 10;
-    myGlobals.nRedPucks = 250;
+    myGlobals.nRedPucks = 0;
     //myGlobals.nRedPucks = 250;
     //myGlobals.nRedPucks = 100;
     myGlobals.nGreenPucks = 0;
@@ -572,12 +575,10 @@ function manageRobotPopulation() {
 
 //robot.controller = new OrbitalConstructionController2();
 //robot.controller = new OC2PlotController();
-robot.controller = new OC2VariantController();
+//robot.controller = new OC2VariantController();
+//robot.controller = new OC3OrbitController();
 
-        /*        
-        if (myGlobals.usingBlockly) {
-            robot.controller = new BlocklyController();        
-        } else { 
+        if (!myGlobals.usingBlockly) {
             //robot.controller = new TestController();
             //robot.controller = new SimpleAvoidController();
             //robot.controller = new AdvancedClusterController();
@@ -593,7 +594,6 @@ robot.controller = new OC2VariantController();
             //robot.controller = new OrbitalConstructionController2();
             //robot.controller = new OrbitalConstructionBiColourController();
         }
-        */
         simState.robots.push(robot);
     }
     if (simState.robots.length > myGlobals.nRobots) {

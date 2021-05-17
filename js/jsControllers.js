@@ -842,9 +842,14 @@ class OC2VariantController {
     }
 }
 
-class OC2Controller {
+// Assuming L, C and R collected by co-linear sensors.  Trying different mechanism for orbit.
+class OC3OrbitController {
     constructor() {
-        this.threshold = 0.1;
+        this.threshold = 0.7;
+
+        this.lastDiff = 0;
+        this.maxDiff = 0;
+        this.lastLeft = false;
     }
 
     getAction(timestamp, sensorReadings, redPuckHeld, greenPuckHeld) {
@@ -862,42 +867,46 @@ class OC2Controller {
         let R = sensorReadings.rightProbe.nestValue;
         let leftPucks = sensorReadings.leftRedPuck.count;
 
-        if (L >= C && C >= R) {
-            if (leftPucks > 0) return left;
-            if (C < this.threshold)
-                return veerLeft;
-            else
-                return veerRight;
+        let diff = R - L;
 
-        } else if (L >= R && R >= C) {
-            return left;
+        let action = undefined;
+        if (diff < 0) {
+            action = right;
+            this.lastLeft = false;
+        } else if (diff > 0.5*this.maxDiff) {
+            if (C > this.threshold) {
+                action = left;
+                this.lastLeft = true;
+            } else {
+                action = right;
+                this.lastLeft = false;
+            }
 
-        } else if (C >= L && L >= R) {
-            if (leftPucks > 0) return left;
-            if (C < this.threshold)
-                return veerLeft;
-            else
-                return veerRight;
-
-        } else if (C >= R && R >= L) {
-            if (leftPucks > 0) return left;
-            if (C < this.threshold)
-                return veerLeft;
-            else
-                return veerRight;
-
-        } else if (R >= L && L >= C) {
-            if (C < this.threshold)
-                return veerLeft;
-            else
-                return veerRight;
-
-        } else if (R >= C && C >= L) {
-            if (C < this.threshold)
-                return veerLeft;
-            else
-                return veerRight;
+        } else if (diff > this.lastDiff) {
+            // Diff has risen (which is good).  Keep doing the same as last time.
+            if (this.lastLeft) {
+                action = left;
+                this.lastLeft = true;
+            } else {
+                action = right;
+                this.lastLeft = false;
+            }
+        } else {
+            // Diff has fallen (bad).  Do the opposite of last time.
+            if (this.lastLeft) {
+                action = right;
+                this.lastLeft = false;
+            } else {
+                action = left;
+                this.lastLeft = true;
+            }
         }
+
+        action.textMessage = diff;
+        this.lastDiff = diff;
+        if (diff > this.maxDiff) {
+            this.maxDiff = diff;
+        }
+        return action;
     }
 }
-

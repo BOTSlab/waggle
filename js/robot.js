@@ -187,8 +187,8 @@ startCircleI = startCircleI + 1;
             let distance = 2*myGlobals.robotRadius;
 
             this.gridProbes.leftProbe = { distance: distance, angle: -angle };
-            //this.gridProbes.centreProbe = { distance: distance/Math.sqrt(2),
-            this.gridProbes.centreProbe = { distance: distance,
+this.gridProbes.centreProbe = { distance: distance/Math.sqrt(2),
+//            this.gridProbes.centreProbe = { distance: distance,
                                             angle: 0 };
             this.gridProbes.rightProbe = { distance: distance, angle: angle };
         }
@@ -269,12 +269,10 @@ startCircleI = startCircleI + 1;
         let angle = -Math.PI/4;
         let dx = (rr + r) * Math.cos(angle) + forwardShift;
         let dy = (rr + r) * Math.sin(angle);
-/*
         let leftBody = Bodies.circle(x + dx, y + dy, r, {isSensor: true});
         let leftSensorName = "left" + sensorName;
         this.sensors[leftSensorName] = new SimpleObjectSensor(leftBody, this,
                                                               sensedType);
-*/
 
         // Right sensor
         dx = (rr + r) * Math.cos(-angle) + forwardShift;
