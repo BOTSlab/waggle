@@ -471,8 +471,8 @@ var Mouse = Matter.Mouse;
 //            if (metrics.timing) {
 //                text += "fps: " + Math.round(metrics.timing.fps) + space;
 //            }
-text += "render delta (ms): " + Math.round(Date.now() - (render.debugTimestamp));
-text += "\nelapsed (ms): " + simState.clockElapsed;
+//text += "render delta (ms): " + Math.round(Date.now() - (render.debugTimestamp));
+//text += "\nelapsed (ms): " + simState.clockElapsed;
 
 
             render.debugString = text;

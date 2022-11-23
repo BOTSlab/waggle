@@ -35,5 +35,6 @@ var myGlobals = {
     resetAfterMaxStep: false,
     showPheromoneGrid: false,
     showNestGrid: false,
-    renderSkip: 1
+    renderSkip: 1,
+    controllerString: "OrbitalConstructionController"
 };
