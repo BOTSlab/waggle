@@ -11,7 +11,7 @@ var myGlobals = {
     configuration: configuration,
     width : 100,
     height : 800,
-    maxStep : 4000,
+    maxStep : 100000,
     MAX_FORWARD_SPEED: 0.015,
     MAX_ANGULAR_SPEED: 0.2,
     wallThickness: 1000,
@@ -30,11 +30,11 @@ var myGlobals = {
     stepsBetweenControllerUpdates: 1,
     allowMovement: true,
     allowRotation: true,
-    showSensors: false,
+    showSensors: true,
     doAnalysis: true,
     resetAfterMaxStep: false,
     showPheromoneGrid: false,
     showNestGrid: false,
     renderSkip: 1,
-    controllerString: "OrbitalConstructionController"
+    controllerString: "JSController"
 };

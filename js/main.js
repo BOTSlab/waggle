@@ -92,7 +92,7 @@ if (configuration == "#TUTORIAL") {
     myGlobals.nRedPucks = 30;
     myGlobals.nGreenPucks = 30;
     document.getElementById('gridDiv').style.display = "none";
-} else if (configuration == "#reset") {
+} else if (configuration == "#FIREFLY") {
     myGlobals.width = 500;
     myGlobals.height = 500;
     myGlobals.nRedPucks = 0;
@@ -200,8 +200,7 @@ if (configuration == "#TUTORIAL") {
     myGlobals.showNestGrid = true;
     document.getElementById('gridSelect').value = "nest";
     document.getElementById('nGreenPucksLabel').style.display = "none";
-    document.getElementById('nGreenPucksSlider').style.display = "none";
-    document.getElementById('nGreenPucksText').style.display = "none";
+    document.getElementById('nGreenPucksSlider').style.display = "none"; document.getElementById('nGreenPucksText').style.display = "none";
 } else if (configuration == "#MAJORITY") {
     myGlobals.nRobots = 16;
     myGlobals.width = 500;
@@ -573,18 +572,8 @@ function manageRobotPopulation() {
         var robot = new Robot(engine.world, myGlobals);
         robot.controller = new Controller();
 
-//robot.controller = new OrbitalConstructionController2();
-//robot.controller = new OC2PlotController();
-//robot.controller = new OC2VariantController();
-//robot.controller = new OC3OrbitController();
-
         if (!myGlobals.usingBlockly) {
-            //robot.controller = new TestController();
-            //robot.controller = new SimpleAvoidController();
-            //robot.controller = new AdvancedClusterController();
-            if (myGlobals.controllerString == "JSController") {
-                robot.controller = new JSController();
-            } else if (myGlobals.controllerString == "OrbitController") {
+            if (myGlobals.controllerString == "OrbitController") {
                 robot.controller = new OrbitController();
             } else if (myGlobals.controllerString == "OrbitalConstructionController") {
                 robot.controller = new OrbitalConstructionController();

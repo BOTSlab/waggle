@@ -35,8 +35,8 @@
         <!-- <script src="blockly_xml/toolbox.xml" type="text/xml"></script> -->
 <xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">
   <category name="Sensors" colour="#a55b5b">
-    <block type="robot_left_nest_value"></block>
     <block type="robot_left_obstacle"></block>
+    <block type="robot_right_obstacle"></block>
     <block type="robot_within_goal_zone"></block>
     <block type="robot_inner_puck_count">
       <field name="puckColour">red</field>
@@ -53,7 +53,7 @@
     </block>
 -->
     <block type="robot_flash_count"></block>
-    <block type="robot_right_obstacle"></block>
+    <block type="robot_left_nest_value"></block>
     <block type="robot_centre_nest_value"></block>
     <block type="robot_right_nest_value"></block>
     <block type="robot_left_pheromone_value"></block>
@@ -61,7 +61,6 @@
     <block type="robot_right_pheromone_value"></block>
   </category>
   <category name="Actions" colour="#5ba55b">
-    <block type="robot_activate_flash"></block>
     <block type="robot_set_speed">
       <field name="linearSpeed">0</field>
       <field name="angularSpeed">0</field>
@@ -77,6 +76,7 @@
 <!--
     <block type="robot_set_speed_slots"></block>
 -->
+    <block type="robot_activate_flash"></block>
     <block type="robot_deactivate_flash"></block>
     <block type="robot_emit_pheromone">
       <field name="quantity">10</field>
